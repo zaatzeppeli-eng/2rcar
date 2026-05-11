@@ -297,11 +297,6 @@ export default function App() {
                   {authLoading ? "Accesso in corso..." : "Entra"}
                 </button>
               </form>
-              <div style={s.setupBox}>
-                <p style={s.setupTitle}>👤 Come creare l'utente admin</p>
-                <p style={s.setupText}>Su Supabase → <strong>Authentication → Users → Invite user</strong></p>
-                <p style={s.setupText}>Inserisci la tua email e imposta una password. Solo quell'utente potrà accedere.</p>
-              </div>
             </div>
           ) : (
             /* ── PANNELLO ADMIN ── */
