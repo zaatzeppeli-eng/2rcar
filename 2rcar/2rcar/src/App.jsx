@@ -188,7 +188,7 @@ export default function App() {
                   <p style={s.sectionSub}>Le auto del momento selezionate per te</p>
                 </div>
                 {featuredCars.length === 0
-                  ? <p style={{ textAlign: "center", color: "#aaa", padding: "40px 0" }}>Nessuna auto in vetrina — aggiungile dal pannello admin ⭐</p>
+                  ? <p style={{ textAlign: "center", color: "#aaa", padding: "40px 0" }}>Nessuna auto in vetrina</p>
                   : <div style={s.grid3}>{featuredCars.map(car => <CarCard key={car.id} car={car} onClick={() => setSelectedCar(car)} />)}</div>
                 }
               </section>
