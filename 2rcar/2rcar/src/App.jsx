@@ -275,10 +275,10 @@ export default function App() {
             <div style={s.adminLogin}>
               <div style={s.loginIcon}>🔐</div>
               <h2 style={s.adminTitle}>Accesso Admin</h2>
-              <p style={s.loginSub}>Accesso protetto tramite Supabase Auth</p>
+              <p style={s.loginSub}>Accesso protetto</p>
               {!dbConnected && (
                 <div style={{ ...s.setupBox, width: "100%", boxSizing: "border-box" }}>
-                  <p style={{ ...s.setupTitle, fontSize: 13 }}>⚠️ Supabase non configurato — il login non funzionerà finché non inserisci le credenziali nel file .jsx</p>
+                  <p style={{ ...s.setupTitle, fontSize: 13 }}>⚠️ DB non configurato — il login non funzionerà finché non inserisci le credenziali nel file .jsx</p>
                 </div>
               )}
               <form onSubmit={handleAdminLogin} style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
