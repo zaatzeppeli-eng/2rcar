@@ -5,8 +5,8 @@ import { createClient } from "@supabase/supabase-js";
 //  🔧 CONFIGURA QUI LE TUE CREDENZIALI SUPABASE
 //  Vai su https://supabase.com → Il tuo progetto → Settings → API
 // ============================================================
-const SUPABASE_URL = "https://TUOPROGETTOQUI.supabase.co";
-const SUPABASE_ANON_KEY = "LA_TUA_ANON_KEY_QUI";
+const SUPABASE_URL = "https://jveldjtakpniboajesyv.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2ZWxkanRha3BuaWJvYWplc3l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MDk0MzMsImV4cCI6MjA5NDA4NTQzM30.ptt5U27hgBtVsmSKE23b7ys6kehYzqiJMOlvZOPBD2k";// ============================================================
 // ============================================================
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
