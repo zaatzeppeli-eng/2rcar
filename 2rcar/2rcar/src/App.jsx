@@ -1,24 +1,154 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-// ============================================================
-//  🔧 CONFIGURA QUI LE TUE CREDENZIALI SUPABASE
-//  Vai su https://supabase.com → Il tuo progetto → Settings → API
-// ============================================================
 const SUPABASE_URL = "https://jveldjtakpniboajesyv.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2ZWxkanRha3BuaWJvYWplc3l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MDk0MzMsImV4cCI6MjA5NDA4NTQzM30.ptt5U27hgBtVsmSKE23b7ys6kehYzqiJMOlvZOPBD2k";// ============================================================
-// ============================================================
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2ZWxkanRha3BuaWJvYWplc3l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1MDk0MzMsImV4cCI6MjA5NDA4NTQzM30.ptt5U27hgBtVsmSKE23b7ys6kehYzqiJMOlvZOPBD2k";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const TAGS_AVAILABLE = ["automatico", "navigatore", "pelle", "tetto apribile", "sportiva", "SUV", "4x4", "compatta", "city car", "ibrida", "elettrica", "cambio manuale"];
 const NAV_ITEMS = ["Home", "Vendita", "Noleggio", "Contatti"];
+const PLACEHOLDER = "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&q=80";
 
 const FALLBACK_CARS = [
-  { id: 1, brand: "Mercedes-Benz", model: "Classe E", year: 2019, price: 24900, km: 87000, fuel: "Diesel", type: "vendita", tags: ["automatico", "navigatore", "pelle"], featured: true, img: "https://images.unsplash.com/photo-1617788138017-80ad40651399?w=800&q=80" },
-  { id: 2, brand: "BMW", model: "Serie 3 Touring", year: 2020, price: 28500, km: 62000, fuel: "Diesel", type: "vendita", tags: ["automatico", "tetto apribile", "sportiva"], featured: true, img: "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&q=80" },
-  { id: 3, brand: "Volkswagen", model: "Tiguan R-Line", year: 2021, price: 120, km: 45000, fuel: "Benzina", type: "noleggio", tags: ["SUV", "automatico", "4x4"], featured: true, img: "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&q=80" },
+  { id: 1, brand: "Mercedes-Benz", model: "Classe E", year: 2019, price: 24900, km: 87000, fuel: "Diesel", type: "vendita", tags: ["automatico", "navigatore", "pelle"], featured: true, images: ["https://images.unsplash.com/photo-1617788138017-80ad40651399?w=800&q=80"] },
+  { id: 2, brand: "BMW", model: "Serie 3 Touring", year: 2020, price: 28500, km: 62000, fuel: "Diesel", type: "vendita", tags: ["automatico", "tetto apribile", "sportiva"], featured: true, images: ["https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&q=80"] },
+  { id: 3, brand: "Volkswagen", model: "Tiguan R-Line", year: 2021, price: 120, km: 45000, fuel: "Benzina", type: "noleggio", tags: ["SUV", "automatico", "4x4"], featured: true, images: ["https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&q=80"] },
 ];
+
+// ── Upload foto su Supabase Storage ──
+async function uploadImages(files) {
+  const urls = [];
+  for (const file of files) {
+    const ext = file.name.split(".").pop();
+    const path = `cars/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("car-images").upload(path, file, { cacheControl: "3600", upsert: false });
+    if (error) { console.error("Upload error:", error.message); continue; }
+    const { data } = supabase.storage.from("car-images").getPublicUrl(path);
+    urls.push(data.publicUrl);
+  }
+  return urls;
+}
+
+// ── Card con hover gallery ──
+function CarCard({ car, onClick }) {
+  const images = car.images?.length ? car.images : [PLACEHOLDER];
+  const [imgIdx, setImgIdx] = useState(0);
+  const intervalRef = useRef(null);
+
+  function handleMouseEnter() {
+    if (images.length <= 1) return;
+    let i = 0;
+    intervalRef.current = setInterval(() => {
+      i = (i + 1) % images.length;
+      setImgIdx(i);
+    }, 600);
+  }
+
+  function handleMouseLeave() {
+    clearInterval(intervalRef.current);
+    setImgIdx(0);
+  }
+
+  return (
+    <div style={styles.card} onClick={onClick} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <div style={styles.cardImgWrap}>
+        <img src={images[imgIdx]} alt={car.model} style={styles.cardImg} />
+        <div style={{ ...styles.cardBadge, background: car.type === "noleggio" ? "#e67e22" : "#1a1a2e" }}>
+          {car.type === "noleggio" ? "Noleggio" : "Vendita"}
+        </div>
+        {images.length > 1 && (
+          <div style={styles.photoDots}>
+            {images.map((_, i) => (
+              <div key={i} style={{ ...styles.photoDot, background: i === imgIdx ? "#c9a84c" : "rgba(255,255,255,0.6)" }} />
+            ))}
+          </div>
+        )}
+      </div>
+      <div style={styles.cardBody}>
+        <div style={styles.cardTags}>{(car.tags || []).slice(0, 2).map(t => <Tag key={t} label={t} />)}</div>
+        <h3 style={styles.cardTitle}>{car.brand} {car.model}</h3>
+        <p style={styles.cardSub}>{car.year} · {car.fuel} · {car.km?.toLocaleString()} km</p>
+        <p style={styles.cardPrice}>
+          {car.type === "noleggio" ? <>€ {car.price}<span style={styles.cardPriceSub}>/giorno</span></> : `€ ${car.price?.toLocaleString()}`}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Drag & Drop uploader ──
+function ImageUploader({ images, setImages, uploading, setUploading }) {
+  const [dragging, setDragging] = useState(false);
+  const inputRef = useRef();
+
+  async function handleFiles(files) {
+    const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
+    if (!imageFiles.length) return;
+    setUploading(true);
+    const urls = await uploadImages(imageFiles);
+    setImages(prev => [...prev, ...urls]);
+    setUploading(false);
+  }
+
+  return (
+    <div>
+      <div
+        style={{ ...styles.dropzone, ...(dragging ? styles.dropzoneActive : {}) }}
+        onDragOver={e => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={e => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
+        onClick={() => inputRef.current.click()}
+      >
+        <input ref={inputRef} type="file" multiple accept="image/*" style={{ display: "none" }}
+          onChange={e => handleFiles(e.target.files)} />
+        {uploading
+          ? <p style={styles.dropzoneText}>⏳ Caricamento in corso...</p>
+          : <p style={styles.dropzoneText}>📷 Trascina le foto qui oppure clicca per selezionarle<br /><span style={{ fontSize: 12, color: "#aaa" }}>Puoi caricare più foto alla volta</span></p>
+        }
+      </div>
+      {images.length > 0 && (
+        <div style={styles.previewGrid}>
+          {images.map((url, i) => (
+            <div key={i} style={styles.previewItem}>
+              <img src={url} alt="" style={styles.previewImg} />
+              <button style={styles.previewRemove} onClick={() => setImages(prev => prev.filter((_, j) => j !== i))}>✕</button>
+              {i === 0 && <span style={styles.previewMain}>Copertina</span>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Modal galleria foto ──
+function PhotoGallery({ images, onClose }) {
+  const [idx, setIdx] = useState(0);
+  const imgs = images?.length ? images : [PLACEHOLDER];
+
+  return (
+    <div style={styles.galleryOverlay} onClick={onClose}>
+      <div style={styles.galleryBox} onClick={e => e.stopPropagation()}>
+        <button style={styles.galleryClose} onClick={onClose}>✕</button>
+        <img src={imgs[idx]} alt="" style={styles.galleryMain} />
+        {imgs.length > 1 && (
+          <>
+            <button style={{ ...styles.galleryNav, left: 12 }} onClick={() => setIdx((idx - 1 + imgs.length) % imgs.length)}>‹</button>
+            <button style={{ ...styles.galleryNav, right: 12 }} onClick={() => setIdx((idx + 1) % imgs.length)}>›</button>
+            <div style={styles.galleryThumbs}>
+              {imgs.map((url, i) => (
+                <img key={i} src={url} alt="" onClick={() => setIdx(i)}
+                  style={{ ...styles.galleryThumb, ...(i === idx ? styles.galleryThumbActive : {}) }} />
+              ))}
+            </div>
+            <p style={styles.galleryCounter}>{idx + 1} / {imgs.length}</p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const [cars, setCars] = useState([]);
@@ -26,27 +156,23 @@ export default function App() {
   const [dbConnected, setDbConnected] = useState(false);
   const [page, setPage] = useState("Home");
   const [adminOpen, setAdminOpen] = useState(false);
-  // Auth state — null = not logged in, object = Supabase user
   const [adminUser, setAdminUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [selectedCar, setSelectedCar] = useState(null);
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const [filterTag, setFilterTag] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ brand: "", model: "", year: "", price: "", km: "", fuel: "Benzina", type: "vendita", tags: [], featured: false, img: "" });
+  const [uploading, setUploading] = useState(false);
+  const [formImages, setFormImages] = useState([]);
+  const [form, setForm] = useState({ brand: "", model: "", year: "", price: "", km: "", fuel: "Benzina", type: "vendita", tags: [], featured: false });
 
   useEffect(() => {
     loadCars();
-    // Ripristina sessione se l'admin ha già fatto login
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setAdminUser(session?.user ?? null);
-    });
-    // Ascolta cambi di sessione (login/logout)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAdminUser(session?.user ?? null);
-    });
+    supabase.auth.getSession().then(({ data: { session } }) => setAdminUser(session?.user ?? null));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setAdminUser(session?.user ?? null));
     return () => subscription.unsubscribe();
   }, []);
 
@@ -58,7 +184,6 @@ export default function App() {
       setCars(data || []);
       setDbConnected(true);
     } catch (e) {
-      console.warn("Supabase non configurato:", e.message);
       setCars(FALLBACK_CARS);
       setDbConnected(false);
     }
@@ -102,7 +227,7 @@ export default function App() {
       brand: form.brand, model: form.model,
       year: parseInt(form.year), price: parseFloat(form.price), km: parseInt(form.km),
       fuel: form.fuel, type: form.type, tags: form.tags, featured: form.featured,
-      img: form.img || "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&q=80",
+      images: formImages.length ? formImages : [PLACEHOLDER],
     };
     if (dbConnected) {
       const { data, error } = await supabase.from("cars").insert([newCar]).select().single();
@@ -111,7 +236,8 @@ export default function App() {
     } else {
       setCars(prev => [{ ...newCar, id: Date.now() }, ...prev]);
     }
-    setForm({ brand: "", model: "", year: "", price: "", km: "", fuel: "Benzina", type: "vendita", tags: [], featured: false, img: "" });
+    setForm({ brand: "", model: "", year: "", price: "", km: "", fuel: "Benzina", type: "vendita", tags: [], featured: false });
+    setFormImages([]);
     setSaving(false);
     alert("Annuncio aggiunto!");
   }
@@ -139,9 +265,7 @@ export default function App() {
   return (
     <div style={s.root}>
       {!dbConnected && !loading && (
-        <div style={s.banner}>
-          ⚠️ Supabase non configurato — modalità demo. <a href="https://supabase.com" target="_blank" style={{ color: "#fff", fontWeight: 700 }}>Configura ora →</a>
-        </div>
+        <div style={s.banner}>⚠️ Modalità demo — Supabase non configurato</div>
       )}
 
       <nav style={s.nav}>
@@ -153,19 +277,12 @@ export default function App() {
             {NAV_ITEMS.map(item => (
               <button key={item} style={{ ...s.navBtn, ...(page === item ? s.navBtnActive : {}) }} onClick={() => { setPage(item); setFilterTag(null); }}>{item}</button>
             ))}
-            <button style={s.adminBtn} onClick={() => setAdminOpen(true)}>
-              {adminUser ? "Admin ✓" : "Admin ⚙"}
-            </button>
+            <button style={s.adminBtn} onClick={() => setAdminOpen(true)}>{adminUser ? "Admin ✓" : "Admin ⚙"}</button>
           </div>
         </div>
       </nav>
 
-      {loading && (
-        <div style={s.loadingScreen}>
-          <div style={s.spinner} />
-          <p style={{ color: "#888", marginTop: 16 }}>Caricamento annunci...</p>
-        </div>
-      )}
+      {loading && <div style={s.loadingScreen}><div style={s.spinner} /><p style={{ color: "#888", marginTop: 16 }}>Caricamento...</p></div>}
 
       {!loading && (
         <>
@@ -189,7 +306,7 @@ export default function App() {
                 </div>
                 {featuredCars.length === 0
                   ? <p style={{ textAlign: "center", color: "#aaa", padding: "40px 0" }}>Nessuna auto in vetrina</p>
-                  : <div style={s.grid3}>{featuredCars.map(car => <CarCard key={car.id} car={car} onClick={() => setSelectedCar(car)} />)}</div>
+                  : <div style={s.grid3}>{featuredCars.map(car => <CarCard key={car.id} car={car} onClick={() => { setSelectedCar(car); setGalleryOpen(false); }} />)}</div>
                 }
               </section>
               <div style={s.ctaStrip}>
@@ -209,7 +326,7 @@ export default function App() {
                 <p style={s.sectionSub}>{filteredSale.length} annunci disponibili</p>
               </div>
               <TagFilter tags={allTags} active={filterTag} onSelect={setFilterTag} />
-              {filteredSale.length === 0 ? <EmptyState text="Nessuna auto in vendita al momento." /> : <div style={s.grid3}>{filteredSale.map(car => <CarCard key={car.id} car={car} onClick={() => setSelectedCar(car)} />)}</div>}
+              {filteredSale.length === 0 ? <EmptyState text="Nessuna auto in vendita al momento." /> : <div style={s.grid3}>{filteredSale.map(car => <CarCard key={car.id} car={car} onClick={() => { setSelectedCar(car); setGalleryOpen(false); }} />)}</div>}
             </section>
           )}
 
@@ -220,7 +337,7 @@ export default function App() {
                 <p style={s.sectionSub}>Prezzi al giorno — disponibilità immediata</p>
               </div>
               <TagFilter tags={allTags} active={filterTag} onSelect={setFilterTag} />
-              {filteredRental.length === 0 ? <EmptyState text="Nessuna auto a noleggio al momento." /> : <div style={s.grid3}>{filteredRental.map(car => <CarCard key={car.id} car={car} onClick={() => setSelectedCar(car)} />)}</div>}
+              {filteredRental.length === 0 ? <EmptyState text="Nessuna auto a noleggio al momento." /> : <div style={s.grid3}>{filteredRental.map(car => <CarCard key={car.id} car={car} onClick={() => { setSelectedCar(car); setGalleryOpen(false); }} />)}</div>}
             </section>
           )}
 
@@ -231,7 +348,7 @@ export default function App() {
                 <p style={s.sectionSub}>Siamo a tua disposizione</p>
               </div>
               <div style={s.contactCard}>
-                {[["📍", "Via collatina 381, Roma (RM)"], ["📞", "393 000 8654","0688922000" ], ["✉️", "2erreprofessionalcar@libero.it"], ["🕐", "Lun–Sab: 9:00–19:00"]].map(([icon, text]) => (
+                {[["📍", "Via Collatina 381, Roma (RM)"], ["📞", "393 000 8654 — 06 88922000"], ["✉️", "2erreprofessionalcar@libero.it"], ["🕐", "Lun–Sab: 9:00–19:00"]].map(([icon, text]) => (
                   <div key={text} style={s.contactItem}><span style={s.contactIcon}>{icon}</span><span>{text}</span></div>
                 ))}
               </div>
@@ -242,15 +359,18 @@ export default function App() {
 
       <footer style={s.footer}>
         <p style={s.footerLogo}><span style={s.logoAccent}>2R</span> CAR</p>
-        <p style={s.footerSub}> — Via collatina, 381, Roma</p>
+        <p style={s.footerSub}>Via Collatina, 381 — Roma</p>
         {dbConnected && <p style={{ ...s.footerSub, color: "#2ecc71", marginTop: 4 }}>● Database connesso</p>}
       </footer>
 
-      {/* MODAL AUTO */}
+      {/* MODAL DETTAGLIO AUTO */}
       {selectedCar && (
         <Modal onClose={() => setSelectedCar(null)}>
-          <div style={s.modalImg}>
-            <img src={selectedCar.img} alt={selectedCar.model} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <div style={s.modalImg} onClick={() => setGalleryOpen(true)}>
+            <img src={selectedCar.images?.[0] || PLACEHOLDER} alt={selectedCar.model} style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "zoom-in" }} />
+            {selectedCar.images?.length > 1 && (
+              <div style={s.modalPhotoCount}>📷 {selectedCar.images.length} foto — clicca per vedere tutte</div>
+            )}
           </div>
           <div style={s.modalBody}>
             <div style={s.modalTags}>
@@ -262,36 +382,27 @@ export default function App() {
             <h2 style={s.modalTitle}>{selectedCar.brand} {selectedCar.model}</h2>
             <p style={s.modalYear}>{selectedCar.year} · {selectedCar.fuel} · {selectedCar.km?.toLocaleString()} km</p>
             <p style={s.modalPrice}>{selectedCar.type === "noleggio" ? `€ ${selectedCar.price}/giorno` : `€ ${selectedCar.price?.toLocaleString()}`}</p>
-            <a href="tel:+390600000000" style={s.contactCallBtn}>📞 Chiama per info</a>
+            <a href="tel:+393000008654" style={s.contactCallBtn}>📞 Chiama per info</a>
           </div>
         </Modal>
+      )}
+
+      {/* GALLERIA FOTO */}
+      {selectedCar && galleryOpen && (
+        <PhotoGallery images={selectedCar.images} onClose={() => setGalleryOpen(false)} />
       )}
 
       {/* ADMIN MODAL */}
       {adminOpen && (
         <Modal onClose={() => setAdminOpen(false)}>
           {!adminUser ? (
-            /* ── LOGIN FORM ── */
             <div style={s.adminLogin}>
               <div style={s.loginIcon}>🔐</div>
               <h2 style={s.adminTitle}>Accesso Admin</h2>
               <p style={s.loginSub}>Accesso protetto</p>
-              {!dbConnected && (
-                <div style={{ ...s.setupBox, width: "100%", boxSizing: "border-box" }}>
-                  <p style={{ ...s.setupTitle, fontSize: 13 }}>⚠️ DB non configurato — il login non funzionerà finché non inserisci le credenziali nel file .jsx</p>
-                </div>
-              )}
               <form onSubmit={handleAdminLogin} style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
-                <input
-                  type="email" placeholder="Email admin" required
-                  value={loginEmail} onChange={e => setLoginEmail(e.target.value)}
-                  style={s.input} autoComplete="username"
-                />
-                <input
-                  type="password" placeholder="Password" required
-                  value={loginPassword} onChange={e => setLoginPassword(e.target.value)}
-                  style={s.input} autoComplete="current-password"
-                />
+                <input type="email" placeholder="Email admin" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} style={s.input} autoComplete="username" />
+                <input type="password" placeholder="Password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} style={s.input} autoComplete="current-password" />
                 {authError && <p style={s.authError}>{authError}</p>}
                 <button type="submit" style={{ ...s.submitBtn, opacity: authLoading ? 0.6 : 1 }} disabled={authLoading}>
                   {authLoading ? "Accesso in corso..." : "Entra"}
@@ -299,7 +410,6 @@ export default function App() {
               </form>
             </div>
           ) : (
-            /* ── PANNELLO ADMIN ── */
             <div style={s.adminPanel}>
               <div style={s.adminHeader}>
                 <div>
@@ -308,34 +418,6 @@ export default function App() {
                 </div>
                 <button style={s.logoutBtn} onClick={handleAdminLogout}>Esci</button>
               </div>
-
-              {!dbConnected && (
-                <div style={s.setupBox}>
-                  <p style={s.setupTitle}>🔧 Configura Supabase</p>
-                  <p style={s.setupText}>1. <strong>supabase.com</strong> → nuovo progetto gratuito</p>
-                  <p style={s.setupText}>2. <strong>SQL Editor</strong> → esegui:</p>
-                  <pre style={s.codeBox}>{`create table cars (
-  id bigint generated always as identity primary key,
-  created_at timestamptz default now(),
-  brand text not null, model text not null,
-  year int, price numeric, km int,
-  fuel text, type text, tags text[],
-  featured boolean default false, img text
-);
-alter table cars enable row level security;
-
--- Lettura pubblica (tutti vedono le auto)
-create policy "Public read"
-  on cars for select using (true);
-
--- Scrittura solo per admin autenticati
-create policy "Auth write"
-  on cars for all
-  using (auth.role() = 'authenticated');`}</pre>
-                  <p style={s.setupText}>3. <strong>Settings → API</strong> → copia URL e anon key nel file .jsx</p>
-                  <p style={s.setupText}>4. <strong>Authentication → Users → Invite user</strong> → crea il tuo account admin</p>
-                </div>
-              )}
 
               <h3 style={s.adminSectionTitle}>➕ Nuovo Annuncio</h3>
               <form onSubmit={handleAddCar} style={s.adminForm}>
@@ -353,13 +435,11 @@ create policy "Auth write"
                     {["Benzina", "Diesel", "Ibrida", "Elettrica", "GPL"].map(f => <option key={f}>{f}</option>)}
                   </select>
                 </div>
-                <div style={s.formRow}>
-                  <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} style={s.select}>
-                    <option value="vendita">Vendita</option>
-                    <option value="noleggio">Noleggio</option>
-                  </select>
-                  <input placeholder="URL Foto (opzionale)" value={form.img} onChange={e => setForm({ ...form, img: e.target.value })} style={s.input} />
-                </div>
+                <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} style={s.select}>
+                  <option value="vendita">Vendita</option>
+                  <option value="noleggio">Noleggio</option>
+                </select>
+
                 <div style={s.tagPicker}>
                   <p style={s.tagPickerLabel}>Tag:</p>
                   <div style={s.tagPickerGrid}>
@@ -369,12 +449,16 @@ create policy "Auth write"
                     ))}
                   </div>
                 </div>
+
+                <p style={s.tagPickerLabel}>Foto:</p>
+                <ImageUploader images={formImages} setImages={setFormImages} uploading={uploading} setUploading={setUploading} />
+
                 <label style={s.checkLabel}>
                   <input type="checkbox" checked={form.featured} onChange={e => setForm({ ...form, featured: e.target.checked })} />
                   &nbsp; Metti in vetrina
                 </label>
-                <button type="submit" style={{ ...s.submitBtn, opacity: saving ? 0.6 : 1 }} disabled={saving}>
-                  {saving ? "Salvataggio..." : "Aggiungi Annuncio"}
+                <button type="submit" style={{ ...s.submitBtn, opacity: (saving || uploading) ? 0.6 : 1 }} disabled={saving || uploading}>
+                  {saving ? "Salvataggio..." : uploading ? "Attendi upload foto..." : "Aggiungi Annuncio"}
                 </button>
               </form>
 
@@ -382,9 +466,12 @@ create policy "Auth write"
               <div style={s.adminList}>
                 {cars.map(car => (
                   <div key={car.id} style={s.adminListItem}>
-                    <div style={s.adminListInfo}>
-                      <strong>{car.brand} {car.model}</strong>
-                      <span style={s.adminListSub}>{car.year} · {car.type === "noleggio" ? `€${car.price}/g` : `€${car.price?.toLocaleString()}`} · {car.type}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <img src={car.images?.[0] || PLACEHOLDER} alt="" style={{ width: 48, height: 36, objectFit: "cover", borderRadius: 4 }} />
+                      <div style={s.adminListInfo}>
+                        <strong>{car.brand} {car.model}</strong>
+                        <span style={s.adminListSub}>{car.year} · {car.type === "noleggio" ? `€${car.price}/g` : `€${car.price?.toLocaleString()}`} · {car.images?.length || 1} foto</span>
+                      </div>
                     </div>
                     <div style={s.adminListActions}>
                       <button style={{ ...s.adminActionBtn, background: car.featured ? "#f39c12" : "#ecf0f1", color: car.featured ? "#fff" : "#333" }}
@@ -398,27 +485,6 @@ create policy "Auth write"
           )}
         </Modal>
       )}
-    </div>
-  );
-}
-
-function CarCard({ car, onClick }) {
-  return (
-    <div style={styles.card} onClick={onClick}>
-      <div style={styles.cardImgWrap}>
-        <img src={car.img} alt={car.model} style={styles.cardImg} />
-        <div style={{ ...styles.cardBadge, background: car.type === "noleggio" ? "#e67e22" : "#1a1a2e" }}>
-          {car.type === "noleggio" ? "Noleggio" : "Vendita"}
-        </div>
-      </div>
-      <div style={styles.cardBody}>
-        <div style={styles.cardTags}>{(car.tags || []).slice(0, 2).map(t => <Tag key={t} label={t} />)}</div>
-        <h3 style={styles.cardTitle}>{car.brand} {car.model}</h3>
-        <p style={styles.cardSub}>{car.year} · {car.fuel} · {car.km?.toLocaleString()} km</p>
-        <p style={styles.cardPrice}>
-          {car.type === "noleggio" ? <>€ {car.price}<span style={styles.cardPriceSub}>/giorno</span></> : `€ ${car.price?.toLocaleString()}`}
-        </p>
-      </div>
     </div>
   );
 }
@@ -471,10 +537,12 @@ const styles = {
   sectionTitle: { fontSize: 32, fontWeight: 700, margin: "0 0 8px", color: "#1a1a2e" },
   sectionSub: { color: "#888", fontSize: 16, margin: 0 },
   grid3: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 },
-  card: { background: "#fff", borderRadius: 12, overflow: "hidden", cursor: "pointer", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" },
+  card: { background: "#fff", borderRadius: 12, overflow: "hidden", cursor: "pointer", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", transition: "transform .2s, box-shadow .2s" },
   cardImgWrap: { position: "relative", height: 200, overflow: "hidden" },
-  cardImg: { width: "100%", height: "100%", objectFit: "cover" },
+  cardImg: { width: "100%", height: "100%", objectFit: "cover", transition: "opacity .15s" },
   cardBadge: { position: "absolute", top: 12, right: 12, color: "#fff", fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 20, letterSpacing: 0.5, textTransform: "uppercase" },
+  photoDots: { position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 4 },
+  photoDot: { width: 6, height: 6, borderRadius: "50%", transition: "background .2s" },
   cardBody: { padding: 20 },
   cardTags: { display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" },
   cardTitle: { fontSize: 18, fontWeight: 700, margin: "0 0 6px", color: "#1a1a2e" },
@@ -499,13 +567,25 @@ const styles = {
   overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 },
   modal: { background: "#fff", borderRadius: 16, width: "100%", maxWidth: 580, maxHeight: "90vh", overflowY: "auto", position: "relative" },
   modalClose: { position: "absolute", top: 16, right: 16, background: "rgba(0,0,0,0.1)", border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", zIndex: 10, fontSize: 14 },
-  modalImg: { height: 240, overflow: "hidden", borderRadius: "16px 16px 0 0" },
+  modalImg: { height: 240, overflow: "hidden", borderRadius: "16px 16px 0 0", position: "relative" },
+  modalPhotoCount: { position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 12px", borderRadius: 20 },
   modalBody: { padding: 28 },
   modalTags: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 },
   modalTitle: { fontSize: 26, fontWeight: 700, margin: "0 0 6px", color: "#1a1a2e" },
   modalYear: { color: "#888", fontSize: 14, margin: "0 0 16px" },
   modalPrice: { fontSize: 30, fontWeight: 700, color: "#c9a84c", margin: "0 0 24px" },
   contactCallBtn: { display: "block", background: "#1a1a2e", color: "#c9a84c", textAlign: "center", padding: "14px", borderRadius: 8, fontWeight: 700, textDecoration: "none", fontSize: 16, letterSpacing: 0.5 },
+  // Gallery
+  galleryOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center" },
+  galleryBox: { position: "relative", maxWidth: 900, width: "100%", padding: 20 },
+  galleryClose: { position: "absolute", top: -10, right: 10, background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", borderRadius: "50%", width: 36, height: 36, cursor: "pointer", fontSize: 18, zIndex: 10 },
+  galleryMain: { width: "100%", maxHeight: "65vh", objectFit: "contain", borderRadius: 8 },
+  galleryNav: { position: "absolute", top: "40%", background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", borderRadius: "50%", width: 44, height: 44, fontSize: 24, cursor: "pointer" },
+  galleryThumbs: { display: "flex", gap: 8, justifyContent: "center", marginTop: 12, flexWrap: "wrap" },
+  galleryThumb: { width: 64, height: 48, objectFit: "cover", borderRadius: 4, cursor: "pointer", opacity: 0.5 },
+  galleryThumbActive: { opacity: 1, outline: "2px solid #c9a84c" },
+  galleryCounter: { textAlign: "center", color: "#888", fontSize: 13, marginTop: 8 },
+  // Admin
   adminLogin: { padding: 32, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 },
   loginIcon: { fontSize: 40 },
   loginSub: { color: "#888", fontSize: 13, margin: 0, textAlign: "center" },
@@ -516,10 +596,6 @@ const styles = {
   adminPanel: { padding: 28 },
   adminTitle: { fontSize: 22, fontWeight: 700, margin: "0 0 4px", color: "#1a1a2e" },
   adminSectionTitle: { fontSize: 13, fontWeight: 700, color: "#888", margin: "0 0 16px", textTransform: "uppercase", letterSpacing: 1 },
-  setupBox: { background: "#fffbf0", border: "1px solid #f0d080", borderRadius: 10, padding: 16, marginBottom: 20 },
-  setupTitle: { fontWeight: 700, fontSize: 14, margin: "0 0 8px" },
-  setupText: { fontSize: 12, color: "#555", margin: "6px 0" },
-  codeBox: { background: "#1a1a2e", color: "#c9a84c", borderRadius: 8, padding: 12, fontSize: 10.5, overflowX: "auto", margin: "8px 0", fontFamily: "monospace", lineHeight: 1.7 },
   adminForm: { display: "flex", flexDirection: "column", gap: 12 },
   formRow: { display: "flex", gap: 12 },
   input: { flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd", fontFamily: "inherit", fontSize: 14, outline: "none" },
@@ -529,10 +605,18 @@ const styles = {
   tagPickerGrid: { display: "flex", gap: 8, flexWrap: "wrap" },
   tagPickerBtn: { background: "#fff", border: "1px solid #ddd", padding: "5px 12px", borderRadius: 20, cursor: "pointer", fontSize: 12, fontFamily: "inherit" },
   tagPickerBtnActive: { background: "#1a1a2e", border: "1px solid #1a1a2e", color: "#c9a84c" },
+  dropzone: { border: "2px dashed #ddd", borderRadius: 10, padding: "28px 16px", textAlign: "center", cursor: "pointer", background: "#fafafa", transition: "all .2s" },
+  dropzoneActive: { border: "2px dashed #c9a84c", background: "#fffbf0" },
+  dropzoneText: { color: "#888", fontSize: 14, margin: 0, lineHeight: 1.8 },
+  previewGrid: { display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 },
+  previewItem: { position: "relative", width: 80, height: 60 },
+  previewImg: { width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 },
+  previewRemove: { position: "absolute", top: -6, right: -6, background: "#e74c3c", border: "none", color: "#fff", borderRadius: "50%", width: 18, height: 18, fontSize: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
+  previewMain: { position: "absolute", bottom: 2, left: 2, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 9, padding: "1px 4px", borderRadius: 3 },
   checkLabel: { fontSize: 14, display: "flex", alignItems: "center", cursor: "pointer" },
   submitBtn: { background: "#1a1a2e", color: "#c9a84c", border: "none", padding: "12px", borderRadius: 8, fontFamily: "inherit", fontSize: 15, fontWeight: 700, cursor: "pointer", letterSpacing: 0.5 },
   adminList: { display: "flex", flexDirection: "column", gap: 10, maxHeight: 280, overflowY: "auto" },
-  adminListItem: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "#f8f8f8", borderRadius: 8 },
+  adminListItem: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "#f8f8f8", borderRadius: 8 },
   adminListInfo: { display: "flex", flexDirection: "column", gap: 2 },
   adminListSub: { fontSize: 12, color: "#888" },
   adminListActions: { display: "flex", gap: 8 },
