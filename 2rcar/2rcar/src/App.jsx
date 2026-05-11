@@ -231,7 +231,7 @@ export default function App() {
                 <p style={s.sectionSub}>Siamo a tua disposizione</p>
               </div>
               <div style={s.contactCard}>
-                {[["📍", "Via Roma 1, Artena (RM)"], ["📞", "+39 06 000 0000"], ["✉️", "info@2rcar.it"], ["🕐", "Lun–Sab: 9:00–19:00"]].map(([icon, text]) => (
+                {[["📍", "Via collatina 381, Roma (RM)"], ["📞", "393 000 8654","0688922000" ], ["✉️", "2erreprofessionalcar@libero.it"], ["🕐", "Lun–Sab: 9:00–19:00"]].map(([icon, text]) => (
                   <div key={text} style={s.contactItem}><span style={s.contactIcon}>{icon}</span><span>{text}</span></div>
                 ))}
               </div>
@@ -242,7 +242,7 @@ export default function App() {
 
       <footer style={s.footer}>
         <p style={s.footerLogo}><span style={s.logoAccent}>2R</span> CAR</p>
-        <p style={s.footerSub}>P.IVA 00000000000 — Artena, Roma</p>
+        <p style={s.footerSub}> — Via collatina, 381, Roma</p>
         {dbConnected && <p style={{ ...s.footerSub, color: "#2ecc71", marginTop: 4 }}>● Database connesso</p>}
       </footer>
 
