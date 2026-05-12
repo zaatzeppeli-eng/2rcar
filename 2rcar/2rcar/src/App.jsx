@@ -3,12 +3,10 @@ import { createClient } from "@supabase/supabase-js";
 const SUPABASE_URL = "https://jveldjtakpniboajesyv.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZconst supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // Caratteristiche disponibili (SOLO features, cambio è campo separato)
-const FEATURES_AVAILABLE = [
- "Aria condizionata", "Navigatore", "Sensori parcheggio", "Bluetooth",
+const FEATURES_AVAILABLE = ["Aria condizionata", "Navigatore", "Sensori parcheggio", "Bluetooth",
  "Telecamera retromarcia", "Cruise control", "Pelle", "Tetto apribile",
- "Cerchi in lega", "Fari LED", "Sedili riscaldati", "Android Auto / CarPlay",
- "4x4", "Ibrida", "Elettrica"
-];
+ "Cerchi in lega", "Fari LED", "Sedili riscaldati", "Android Auto o CarPlay",
+ "4x4", "Ibrida", "Elettrica"];
 const NAV_ITEMS = ["Home", "Vendita", "Noleggio", "Chi Siamo", "Contatti"];
 const PLACEHOLDER = "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&q=80"const EMPTY_FILTERS = {
  features: [], // multi-select array
