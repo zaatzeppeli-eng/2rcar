@@ -10,10 +10,20 @@ const TAGS_AVAILABLE = ["automatico", "navigatore", "pelle", "tetto apribile", "
 const NAV_ITEMS = ["Home", "Vendita", "Noleggio", "Chi Siamo", "Contatti"];
 const PLACEHOLDER = "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&q=80";
 
+// Auto-hide dopo 7 giorni per annunci "venduta"
+function isExpired(car) {
+  if (car.status !== "venduta") return false;
+  if (!car.sold_at) return false;
+  const soldAt = new Date(car.sold_at);
+  const now = new Date();
+  const diffDays = (now - soldAt) / (1000 * 60 * 60 * 24);
+  return diffDays >= 7;
+}
+
 const FALLBACK_CARS = [
-  { id: 1, brand: "Mercedes-Benz", model: "Classe E", year: 2019, price: 24900, km: 87000, fuel: "Diesel", type: "vendita", tags: ["automatico", "navigatore", "pelle"], featured: true, images: ["https://images.unsplash.com/photo-1617788138017-80ad40651399?w=800&q=80"] },
-  { id: 2, brand: "BMW", model: "Serie 3 Touring", year: 2020, price: 28500, km: 62000, fuel: "Diesel", type: "vendita", tags: ["automatico", "tetto apribile", "sportiva"], featured: true, images: ["https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&q=80"] },
-  { id: 3, brand: "Volkswagen", model: "Tiguan R-Line", year: 2021, price: 120, km: 45000, fuel: "Benzina", type: "noleggio", tags: ["SUV", "automatico", "4x4"], featured: true, images: ["https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&q=80"] },
+  { id: 1, brand: "Mercedes-Benz", model: "Classe E", year: 2019, price: 24900, km: 87000, fuel: "Diesel", type: "vendita", status: "vendita", tags: ["automatico", "navigatore", "pelle"], featured: true, images: ["https://images.unsplash.com/photo-1617788138017-80ad40651399?w=800&q=80"], description: "" },
+  { id: 2, brand: "BMW", model: "Serie 3 Touring", year: 2020, price: 28500, km: 62000, fuel: "Diesel", type: "vendita", status: "vendita", tags: ["automatico", "tetto apribile", "sportiva"], featured: true, images: ["https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&q=80"], description: "" },
+  { id: 3, brand: "Volkswagen", model: "Tiguan R-Line", year: 2021, price: 120, km: 45000, fuel: "Benzina", type: "noleggio", status: "noleggio", tags: ["SUV", "automatico", "4x4"], featured: true, images: ["https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&q=80"], description: "" },
 ];
 
 async function uploadImages(files) {
@@ -66,6 +76,15 @@ const GLOBAL_CSS = `
   ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
   * { scrollbar-width: thin; scrollbar-color: var(--gold) transparent; }
 
+  /* ── Layout wrapper ── */
+  .page-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-top: var(--nav-h);
+  }
+  .page-content { flex: 1; }
+
   .nav-bar {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -78,7 +97,6 @@ const GLOBAL_CSS = `
     transition: transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
     will-change: transform;
   }
-  /* nasconde verso il BASSO quando si scrolla giù */
   .nav-bar.hidden { transform: translateY(-110%); }
 
   .nav-inner {
@@ -275,6 +293,7 @@ const GLOBAL_CSS = `
     color: #555;
     text-align: center;
     padding: 2.5rem 1.5rem;
+    margin-top: auto;
   }
   .footer-logo { font-family: 'Playfair Display', serif; font-size: 1.3rem; letter-spacing: 0.12em; margin-bottom: 0.5rem; }
   .footer-sub { font-size: 0.78rem; }
@@ -305,19 +324,59 @@ const GLOBAL_CSS = `
     transition: background 0.15s;
   }
   .modal-close:hover { background: rgba(0,0,0,0.15); }
-  .modal-img { height: 15rem; overflow: hidden; border-radius: 1rem 1rem 0 0; position: relative; cursor: zoom-in; }
-  .modal-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s; }
-  .modal-img:hover img { transform: scale(1.03); }
-  .modal-photo-count {
-    position: absolute; bottom: 0.75rem; left: 50%; transform: translateX(-50%);
-    background: rgba(0,0,0,0.6); color: #fff; font-size: 0.75rem;
-    padding: 0.3em 0.9em; border-radius: 999px; white-space: nowrap; backdrop-filter: blur(4px);
+
+  /* ── Modal gallery carousel ── */
+  .modal-gallery {
+    position: relative;
+    height: 15rem;
+    overflow: hidden;
+    border-radius: 1rem 1rem 0 0;
+    background: #111;
+    user-select: none;
   }
+  .modal-gallery-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: opacity 0.2s;
+  }
+  .modal-gallery-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(0,0,0,0.45); border: none; color: #fff;
+    border-radius: 50%; width: 2.2rem; height: 2.2rem;
+    font-size: 1.4rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+    z-index: 5;
+  }
+  .modal-gallery-nav:hover { background: rgba(0,0,0,0.7); }
+  .modal-gallery-counter {
+    position: absolute; bottom: 0.6rem; right: 0.75rem;
+    background: rgba(0,0,0,0.55); color: #fff; font-size: 0.72rem;
+    padding: 0.25em 0.7em; border-radius: 999px; backdrop-filter: blur(4px);
+  }
+  .modal-gallery-dots {
+    position: absolute; bottom: 0.65rem; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 0.3rem;
+  }
+  .modal-gallery-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    transition: background 0.2s, transform 0.2s;
+    cursor: pointer;
+  }
+  .modal-gallery-zoom-hint {
+    position: absolute; top: 0.6rem; left: 0.75rem;
+    background: rgba(0,0,0,0.45); color: rgba(255,255,255,0.8);
+    font-size: 0.65rem; padding: 0.2em 0.6em; border-radius: 999px;
+    pointer-events: none;
+  }
+
   .modal-body { padding: 1.75rem; }
   .modal-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
   .modal-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; color: var(--navy); margin-bottom: 0.3rem; }
   .modal-year { color: var(--muted); font-size: 0.88rem; margin-bottom: 1rem; }
-  .modal-price { font-family: 'Playfair Display', serif; font-size: 1.9rem; font-weight: 700; color: var(--gold); margin-bottom: 1.5rem; }
+  .modal-price { font-family: 'Playfair Display', serif; font-size: 1.9rem; font-weight: 700; color: var(--gold); margin-bottom: 0.75rem; }
+  .modal-description { font-size: 0.9rem; color: #555; line-height: 1.7; margin-bottom: 1.25rem; }
   .contact-call-btn {
     display: block; background: var(--navy); color: var(--gold);
     text-align: center; padding: 0.9em; border-radius: 0.5rem;
@@ -325,6 +384,27 @@ const GLOBAL_CSS = `
     letter-spacing: 0.04em; transition: background 0.18s;
   }
   .contact-call-btn:hover { background: #2a2a4e; }
+
+  /* Venduta banner su card */
+  .sold-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .sold-stamp {
+    border: 3px solid #e74c3c;
+    color: #e74c3c;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 900;
+    padding: 0.2em 0.6em;
+    border-radius: 4px;
+    letter-spacing: 0.12em;
+    transform: rotate(-12deg);
+    background: rgba(0,0,0,0.2);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  }
 
   .gallery-overlay {
     position: fixed; inset: 0;
@@ -374,14 +454,15 @@ const GLOBAL_CSS = `
   .admin-section-title { font-size: 0.75rem; font-weight: 700; color: #aaa; margin: 0 0 1rem; text-transform: uppercase; letter-spacing: 0.1em; }
   .admin-form { display: flex; flex-direction: column; gap: 0.75rem; }
   .form-row { display: flex; gap: 0.75rem; }
-  .input, .select-field {
+  .input, .select-field, .textarea-field {
     flex: 1; padding: 0.65em 0.9em; border-radius: 0.5rem;
     border: 1px solid var(--border); font-family: 'DM Sans', sans-serif;
     font-size: 0.88rem; outline: none; background: var(--white);
     transition: border-color 0.18s, box-shadow 0.18s;
     min-width: 0;
   }
-  .input:focus, .select-field:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
+  .textarea-field { resize: vertical; min-height: 5rem; }
+  .input:focus, .select-field:focus, .textarea-field:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
   .tag-picker { background: #f8f8f8; border-radius: 0.5rem; padding: 0.9rem; }
   .tag-picker-label { font-size: 0.72rem; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; display: block; }
   .tag-picker-grid { display: flex; gap: 0.5rem; flex-wrap: wrap; }
@@ -522,31 +603,6 @@ const GLOBAL_CSS = `
   }
   .value-text { font-size: 0.85rem; color: #666; line-height: 1.65; }
 
-  .testimonial-strip {
-    background: #f0ede6;
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    padding: clamp(2rem, 5vw, 3.5rem) 1.5rem;
-  }
-  .testimonials-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
-    gap: 1.25rem;
-    max-width: 72rem;
-    margin: 0 auto;
-  }
-  .testimonial-card {
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 0.75rem;
-    padding: 1.25rem 1.25rem 1rem;
-    box-shadow: var(--card-shadow);
-  }
-  .testimonial-stars { color: var(--gold); font-size: 0.9rem; margin-bottom: 0.6rem; letter-spacing: 0.05em; }
-  .testimonial-text { font-size: 0.88rem; color: #444; line-height: 1.65; margin-bottom: 0.9rem; font-style: italic; }
-  .testimonial-author { font-size: 0.78rem; font-weight: 600; color: var(--navy); }
-  .testimonial-date { font-size: 0.72rem; color: var(--muted); margin-left: 0.4rem; }
-
   .trust-badges {
     display: flex;
     flex-wrap: wrap;
@@ -591,22 +647,15 @@ function GlobalStyles() {
   return null;
 }
 
-// ── Auto-hide navbar: si nasconde verso l'ALTO quando si scrolla in giù ──
 function useNavHide() {
   const [hidden, setHidden] = useState(false);
   const lastY = useRef(0);
   useEffect(() => {
     function onScroll() {
       const y = window.scrollY;
-      if (y < 60) {
-        setHidden(false);
-      } else if (y > lastY.current + 4) {
-        // scrolling down → hide (slide up)
-        setHidden(true);
-      } else if (y < lastY.current - 4) {
-        // scrolling up → show
-        setHidden(false);
-      }
+      if (y < 60) { setHidden(false); }
+      else if (y > lastY.current + 4) { setHidden(true); }
+      else if (y < lastY.current - 4) { setHidden(false); }
       lastY.current = y;
     }
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -661,26 +710,64 @@ function ImageUploader({ previews, setPreviews, setUploadedFiles, uploading }) {
   );
 }
 
+// ── Modal gallery carousel (scroll foto inline) ──
+function ModalGallery({ images, onZoom }) {
+  const imgs = images?.length ? images : [PLACEHOLDER];
+  const [idx, setIdx] = useState(0);
+
+  function prev(e) { e.stopPropagation(); setIdx(i => (i - 1 + imgs.length) % imgs.length); }
+  function next(e) { e.stopPropagation(); setIdx(i => (i + 1) % imgs.length); }
+
+  return (
+    <div className="modal-gallery" onClick={() => onZoom(idx)}>
+      <img src={imgs[idx]} alt="" className="modal-gallery-img" />
+      {imgs.length > 1 && (
+        <>
+          <button className="modal-gallery-nav" style={{ left: "0.5rem" }} onClick={prev}>‹</button>
+          <button className="modal-gallery-nav" style={{ right: "0.5rem" }} onClick={next}>›</button>
+          <div className="modal-gallery-dots">
+            {imgs.map((_, i) => (
+              <div key={i} className="modal-gallery-dot"
+                style={{ background: i === idx ? "#c9a84c" : "rgba(255,255,255,0.55)", transform: i === idx ? "scale(1.3)" : "scale(1)" }}
+                onClick={e => { e.stopPropagation(); setIdx(i); }} />
+            ))}
+          </div>
+          <div className="modal-gallery-counter">{idx + 1} / {imgs.length}</div>
+        </>
+      )}
+      <div className="modal-gallery-zoom-hint">🔍 clicca per ingrandire</div>
+    </div>
+  );
+}
+
 function CarCard({ car, onClick }) {
   const images = car.images?.length ? car.images : [PLACEHOLDER];
   const [imgIdx, setImgIdx] = useState(0);
   const intervalRef = useRef(null);
+  const isSold = car.status === "venduta";
 
   function handleMouseEnter() {
-    if (images.length <= 1) return;
+    if (images.length <= 1 || isSold) return;
     let i = 0;
     intervalRef.current = setInterval(() => { i = (i + 1) % images.length; setImgIdx(i); }, 700);
   }
   function handleMouseLeave() { clearInterval(intervalRef.current); setImgIdx(0); }
 
+  const badgeColor = isSold ? "#e74c3c" : car.type === "noleggio" ? "#e67e22" : "#1a1a2e";
+  const badgeLabel = isSold ? "Venduta" : car.type === "noleggio" ? "Noleggio" : "Vendita";
+
   return (
-    <div className="car-card" onClick={onClick} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+    <div className="car-card" onClick={onClick} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}
+      style={{ opacity: isSold ? 0.82 : 1 }}>
       <div className="card-img-wrap">
-        <img src={images[imgIdx]} alt={car.model} className="card-img" />
-        <div className="card-badge" style={{ background: car.type === "noleggio" ? "#e67e22" : "#1a1a2e" }}>
-          {car.type === "noleggio" ? "Noleggio" : "Vendita"}
-        </div>
-        {images.length > 1 && (
+        <img src={images[imgIdx]} alt={car.model} className="card-img" style={{ filter: isSold ? "grayscale(35%)" : "none" }} />
+        <div className="card-badge" style={{ background: badgeColor }}>{badgeLabel}</div>
+        {isSold && (
+          <div className="sold-overlay">
+            <div className="sold-stamp">VENDUTA</div>
+          </div>
+        )}
+        {images.length > 1 && !isSold && (
           <div className="photo-dots">
             {images.map((_, i) => (
               <div key={i} className="photo-dot" style={{ background: i === imgIdx ? "#c9a84c" : "rgba(255,255,255,0.6)" }} />
@@ -692,18 +779,21 @@ function CarCard({ car, onClick }) {
         <div className="card-tags">{(car.tags || []).slice(0, 2).map(t => <Tag key={t} label={t} />)}</div>
         <h3 className="card-title">{car.brand} {car.model}</h3>
         <p className="card-sub">{car.year} · {car.fuel} · {car.km?.toLocaleString()} km</p>
-        <p className="card-price">
-          {car.type === "noleggio"
-            ? <>€ {car.price}<span className="card-price-sub">/giorno</span></>
-            : `€ ${car.price?.toLocaleString()}`}
-        </p>
+        {!isSold && (
+          <p className="card-price">
+            {car.type === "noleggio"
+              ? <>€ {car.price}<span className="card-price-sub">/giorno</span></>
+              : `€ ${car.price?.toLocaleString()}`}
+          </p>
+        )}
+        {isSold && <p style={{ color: "#e74c3c", fontWeight: 700, fontSize: "0.9rem" }}>Auto venduta</p>}
       </div>
     </div>
   );
 }
 
-function PhotoGallery({ images, onClose }) {
-  const [idx, setIdx] = useState(0);
+function PhotoGallery({ images, startIdx, onClose }) {
+  const [idx, setIdx] = useState(startIdx || 0);
   const imgs = images?.length ? images : [PLACEHOLDER];
   useEffect(() => {
     function handleKey(e) {
@@ -737,7 +827,7 @@ function PhotoGallery({ images, onClose }) {
   );
 }
 
-// ── Pagina Chi Siamo ──
+// ── Pagina Chi Siamo (aggiornata) ──
 function ChiSiamo({ onContact }) {
   return (
     <>
@@ -749,13 +839,12 @@ function ChiSiamo({ onContact }) {
         </p>
       </div>
 
-      {/* Numeri */}
       <div className="stats-row">
         {[
           { num: "15+", label: "Anni di esperienza" },
           { num: "800+", label: "Auto vendute" },
           { num: "4.8★", label: "Valutazione media" },
-          { num: "0", label: "Costi nascosti" },
+          { num: "100%", label: "Trasparenza" },
         ].map(s => (
           <div key={s.label} className="stat-block">
             <span className="stat-num">{s.num}</span>
@@ -764,7 +853,6 @@ function ChiSiamo({ onContact }) {
         ))}
       </div>
 
-      {/* Chi siamo testo */}
       <section className="section">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 22rem), 1fr))", gap: "3rem", alignItems: "center" }}>
           <div>
@@ -800,7 +888,6 @@ function ChiSiamo({ onContact }) {
         </div>
       </section>
 
-      {/* Valori */}
       <div style={{ background: "#f0ede6", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)", padding: "clamp(2rem, 5vw, 3.5rem) 1.5rem" }}>
         <div className="section" style={{ padding: "0" }}>
           <div className="section-header">
@@ -810,11 +897,9 @@ function ChiSiamo({ onContact }) {
           <div className="values-grid">
             {[
               { icon: "🔍", title: "Controllo prima della vendita", text: "Ogni auto viene verificata meccanicamente e controllata nella storia chilometrica prima di essere esposta." },
-              { icon: "💬", title: "Prezzi trasparenti", text: "Il prezzo che vedi è quello reale. Nessun costo di 'pratica', nessuna sorpresa al momento della firma." },
+              { icon: "💬", title: "Prezzi trasparenti", text: "Il prezzo che vedi è quello reale. Nessuna sorpresa al momento della firma." },
               { icon: "🤝", title: "Trattativa senza pressione", text: "Non lavoriamo a provvigione aggressiva. Hai tutto il tempo che ti serve per decidere con calma." },
-              { icon: "📋", title: "Documentazione in regola", text: "Ci occupiamo noi del passaggio di proprietà, bollo, e pratiche ACI. Tu ritiri e vai." },
-              { icon: "🚗", title: "Prova prima di comprare", text: "Puoi portare l'auto dal tuo meccanico di fiducia o fare un giro di prova senza impegno." },
-              { icon: "📞", title: "Assistenza dopo l'acquisto", text: "Hai un dubbio dopo la vendita? Chiamaci. Non spariremo dopo aver incassato." },
+              { icon: "🚗", title: "Prova prima di comprare", text: "Puoi fare un giro di prova senza impegno, per valutare l'auto con la massima tranquillità." },
             ].map(v => (
               <div key={v.title} className="value-card">
                 <span className="value-icon">{v.icon}</span>
@@ -826,33 +911,6 @@ function ChiSiamo({ onContact }) {
         </div>
       </div>
 
-      {/* Recensioni */}
-      <div className="testimonial-strip">
-        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <h2 className="section-title">Cosa dicono i clienti</h2>
-          <div className="ornament"><div className="ornament-line" /><div className="ornament-dot" /><div className="ornament-line" /></div>
-          <p className="section-sub">Recensioni reali da Google Maps</p>
-        </div>
-        <div className="testimonials-grid">
-          {[
-            { stars: "★★★★★", text: "Acquistata una Ford Focus a ottimo prezzo. Tutto trasparente, nessuna sorpresa. Il titolare è una persona seria.", author: "Antonio M.", date: "feb 2024" },
-            { stars: "★★★★★", text: "Noleggio per 3 settimane, auto pulita e in ottime condizioni. Prezzo onesto. Tornerò sicuramente.", author: "Federica L.", date: "gen 2024" },
-            { stars: "★★★★☆", text: "Bravi, seri e disponibili. Ho trovato la macchina che cercavo a un prezzo ragionevole. Solo l'attesa per le pratiche un po' lunga.", author: "Roberto C.", date: "nov 2023" },
-            { stars: "★★★★★", text: "Ho comprato qui la mia seconda auto. Professionali come la prima volta. Consiglio a chiunque cerchi un'auto usata a Roma.", author: "Sara P.", date: "ott 2023" },
-            { stars: "★★★★★", text: "Zero pressione, tutto spiegato bene. Ho portato l'auto dal mio meccanico prima di comprare e non hanno battuto ciglio.", author: "Luca V.", date: "set 2023" },
-            { stars: "★★★★★", text: "Servizio cortese e professionale. La macchina era esattamente come descritta. Super consigliati.", author: "Chiara B.", date: "ago 2023" },
-          ].map((t, i) => (
-            <div key={i} className="testimonial-card">
-              <div className="testimonial-stars">{t.stars}</div>
-              <p className="testimonial-text">"{t.text}"</p>
-              <span className="testimonial-author">{t.author}</span>
-              <span className="testimonial-date">· {t.date}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Badge di fiducia */}
       <section className="section" style={{ paddingBottom: "1rem" }}>
         <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
           <h2 className="section-title">Perché sceglierci</h2>
@@ -862,9 +920,8 @@ function ChiSiamo({ onContact }) {
           {[
             ["✅", "Attività regolare con P.IVA"],
             ["📍", "Sede fisica verificabile a Roma"],
-            ["🔒", "Passaggi di proprietà in regola"],
             ["📞", "Risposta telefonica garantita"],
-            ["⭐", "4.8/5 su Google Maps"],
+            ["⭐", "Oltre 15 anni di esperienza"],
             ["🗓️", "Aperti dal lunedì al sabato"],
           ].map(([icon, label]) => (
             <div key={label} className="trust-badge">
@@ -875,8 +932,7 @@ function ChiSiamo({ onContact }) {
         </div>
       </section>
 
-      {/* CTA finale */}
-      <div className="cta-strip" style={{ marginBottom: "0" }}>
+      <div className="cta-strip">
         <div className="cta-inner">
           <div>
             <h3 className="cta-title">Vieni a trovarci senza impegno</h3>
@@ -902,12 +958,16 @@ export default function App() {
   const [loginPassword, setLoginPassword] = useState("");
   const [selectedCar, setSelectedCar] = useState(null);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryStartIdx, setGalleryStartIdx] = useState(0);
   const [filterTag, setFilterTag] = useState(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [formPreviews, setFormPreviews] = useState([]);
   const [formFiles, setFormFiles] = useState([]);
-  const [form, setForm] = useState({ brand: "", model: "", year: "", price: "", km: "", fuel: "Benzina", type: "vendita", tags: [], featured: false });
+  const [form, setForm] = useState({
+    brand: "", model: "", year: "", price: "", km: "",
+    fuel: "Benzina", type: "vendita", tags: [], featured: false, description: ""
+  });
 
   const navHidden = useNavHide();
 
@@ -955,6 +1015,17 @@ export default function App() {
     if (dbConnected) for (const u of updates) await supabase.from("cars").update({ featured: u.featured }).eq("id", u.id);
   }
 
+  // Toggle stato venduta
+  async function toggleSold(id) {
+    if (!adminUser) return;
+    const car = cars.find(c => c.id === id);
+    const isSold = car.status === "venduta";
+    const newStatus = isSold ? car.type : "venduta"; // se era venduta, torna al type originale
+    const soldAt = isSold ? null : new Date().toISOString();
+    setCars(prev => prev.map(c => c.id === id ? { ...c, status: newStatus, sold_at: soldAt } : c));
+    if (dbConnected) await supabase.from("cars").update({ status: newStatus, sold_at: soldAt }).eq("id", id);
+  }
+
   async function handleAddCar(e) {
     e.preventDefault(); if (!adminUser) return;
     setSaving(true); setUploading(true);
@@ -964,15 +1035,18 @@ export default function App() {
     const newCar = {
       brand: form.brand, model: form.model, year: parseInt(form.year),
       price: parseFloat(form.price), km: parseInt(form.km),
-      fuel: form.fuel, type: form.type, tags: form.tags, featured: form.featured,
+      fuel: form.fuel, type: form.type, status: form.type,
+      tags: form.tags, featured: form.featured,
       images: imageUrls.length ? imageUrls : [PLACEHOLDER],
+      description: form.description,
+      sold_at: null,
     };
     if (dbConnected) {
       const { data, error } = await supabase.from("cars").insert([newCar]).select().single();
       if (error) { alert("Errore DB: " + error.message); setSaving(false); return; }
       setCars(prev => [data, ...prev]);
     } else { setCars(prev => [{ ...newCar, id: Date.now() }, ...prev]); }
-    setForm({ brand: "", model: "", year: "", price: "", km: "", fuel: "Benzina", type: "vendita", tags: [], featured: false });
+    setForm({ brand: "", model: "", year: "", price: "", km: "", fuel: "Benzina", type: "vendita", tags: [], featured: false, description: "" });
     setFormPreviews([]); setFormFiles([]);
     setSaving(false);
     alert("Annuncio aggiunto!");
@@ -989,20 +1063,25 @@ export default function App() {
     setForm(f => ({ ...f, tags: f.tags.includes(tag) ? f.tags.filter(t => t !== tag) : [...f.tags, tag] }));
   }
 
-  const featuredCars = cars.filter(c => c.featured).slice(0, 3);
-  const saleCars = cars.filter(c => c.type === "vendita");
-  const rentalCars = cars.filter(c => c.type === "noleggio");
+  // Filtra auto: esclude quelle "venduta" scadute (>7 giorni), ma le mostra comunque in admin
+  const visibleCars = cars.filter(c => !isExpired(c));
+
+  const featuredCars = visibleCars.filter(c => c.featured).slice(0, 3);
+  const saleCars = visibleCars.filter(c => c.type === "vendita");
+  const rentalCars = visibleCars.filter(c => c.type === "noleggio");
   const filteredSale = filterTag ? saleCars.filter(c => c.tags?.includes(filterTag)) : saleCars;
   const filteredRental = filterTag ? rentalCars.filter(c => c.tags?.includes(filterTag)) : rentalCars;
-  const allTags = [...new Set(cars.flatMap(c => c.tags || []))];
+  const allTags = [...new Set(visibleCars.flatMap(c => c.tags || []))];
+
+  function openCar(car) { setSelectedCar(car); setGalleryOpen(false); setGalleryStartIdx(0); }
+  function openZoom(idx) { setGalleryStartIdx(idx); setGalleryOpen(true); }
 
   return (
-    <div style={{ paddingTop: "var(--nav-h)" }}>
+    <div className="page-wrapper">
       <GlobalStyles />
 
       {!dbConnected && !loading && <div className="banner">⚠️ Modalità demo — Supabase non configurato</div>}
 
-      {/* ── Navbar: si nasconde scorrendo verso il basso ── */}
       <nav className={`nav-bar${navHidden ? " hidden" : ""}`}>
         <div className="nav-inner">
           <div style={{ cursor: "pointer", letterSpacing: "0.12em", fontSize: "1.25rem", display: "flex", alignItems: "center", gap: "0.15em" }}
@@ -1042,104 +1121,104 @@ export default function App() {
         </div>
       </nav>
 
-      {loading && (
-        <div className="loading-screen">
-          <div className="spinner" />
-          <p>Caricamento...</p>
-        </div>
-      )}
+      <div className="page-content">
+        {loading && (
+          <div className="loading-screen">
+            <div className="spinner" />
+            <p>Caricamento...</p>
+          </div>
+        )}
 
-      {!loading && (
-        <>
-          {page === "Home" && (
-            <>
-              <div className="hero">
-                <div className="hero-overlay" />
-                <div className="hero-content">
-                  <p className="hero-eyebrow">Vendita &amp; Noleggio Auto · Roma</p>
-                  <h1 className="hero-title">La tua prossima auto<br />ti aspetta qui.</h1>
-                  <div className="hero-btns">
-                    <button className="hero-btn" onClick={() => setPage("Vendita")}>Acquista</button>
-                    <button className="hero-btn hero-btn-outline" onClick={() => setPage("Noleggio")}>Noleggia</button>
+        {!loading && (
+          <>
+            {page === "Home" && (
+              <>
+                <div className="hero">
+                  <div className="hero-overlay" />
+                  <div className="hero-content">
+                    <p className="hero-eyebrow">Vendita &amp; Noleggio Auto · Roma</p>
+                    <h1 className="hero-title">La tua prossima auto<br />ti aspetta qui.</h1>
+                    <div className="hero-btns">
+                      <button className="hero-btn" onClick={() => setPage("Vendita")}>Acquista</button>
+                      <button className="hero-btn hero-btn-outline" onClick={() => setPage("Noleggio")}>Noleggia</button>
+                    </div>
                   </div>
                 </div>
-              </div>
 
+                <section className="section">
+                  <div className="section-header">
+                    <h2 className="section-title">In Vetrina</h2>
+                    <div className="ornament"><div className="ornament-line" /><div className="ornament-dot" /><div className="ornament-line" /></div>
+                    <p className="section-sub">Le auto del momento selezionate per te</p>
+                  </div>
+                  {featuredCars.length === 0
+                    ? <p style={{ textAlign: "center", color: "#aaa", padding: "2.5rem 0" }}>Nessuna auto in vetrina</p>
+                    : <div className="grid-3">{featuredCars.map(car => <CarCard key={car.id} car={car} onClick={() => openCar(car)} />)}</div>
+                  }
+                </section>
+
+                <div className="cta-strip">
+                  <div className="cta-inner">
+                    <div>
+                      <h3 className="cta-title">Hai bisogno di un'auto per qualche giorno?</h3>
+                      <p className="cta-sub">Noleggio flessibile, disponibile subito.</p>
+                    </div>
+                    <button className="cta-button" onClick={() => setPage("Noleggio")}>Vedi il noleggio →</button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {page === "Vendita" && (
               <section className="section">
                 <div className="section-header">
-                  <h2 className="section-title">In Vetrina</h2>
+                  <h2 className="section-title">Auto in Vendita</h2>
                   <div className="ornament"><div className="ornament-line" /><div className="ornament-dot" /><div className="ornament-line" /></div>
-                  <p className="section-sub">Le auto del momento selezionate per te</p>
+                  <p className="section-sub">{filteredSale.length} annunci disponibili</p>
                 </div>
-                {featuredCars.length === 0
-                  ? <p style={{ textAlign: "center", color: "#aaa", padding: "2.5rem 0" }}>Nessuna auto in vetrina</p>
-                  : <div className="grid-3">{featuredCars.map(car => <CarCard key={car.id} car={car} onClick={() => { setSelectedCar(car); setGalleryOpen(false); }} />)}</div>
-                }
+                <TagFilter tags={allTags} active={filterTag} onSelect={setFilterTag} />
+                {filteredSale.length === 0
+                  ? <EmptyState text="Nessuna auto in vendita al momento." />
+                  : <div className="grid-3">{filteredSale.map(car => <CarCard key={car.id} car={car} onClick={() => openCar(car)} />)}</div>}
               </section>
+            )}
 
-              <div className="cta-strip">
-                <div className="cta-inner">
-                  <div>
-                    <h3 className="cta-title">Hai bisogno di un'auto per qualche giorno?</h3>
-                    <p className="cta-sub">Noleggio flessibile, disponibile subito.</p>
-                  </div>
-                  <button className="cta-button" onClick={() => setPage("Noleggio")}>Vedi il noleggio →</button>
+            {page === "Noleggio" && (
+              <section className="section">
+                <div className="section-header">
+                  <h2 className="section-title">Auto a Noleggio</h2>
+                  <div className="ornament"><div className="ornament-line" /><div className="ornament-dot" /><div className="ornament-line" /></div>
+                  <p className="section-sub">Prezzi al giorno — disponibilità immediata</p>
                 </div>
-              </div>
-            </>
-          )}
+                <TagFilter tags={allTags} active={filterTag} onSelect={setFilterTag} />
+                {filteredRental.length === 0
+                  ? <EmptyState text="Nessuna auto a noleggio al momento." />
+                  : <div className="grid-3">{filteredRental.map(car => <CarCard key={car.id} car={car} onClick={() => openCar(car)} />)}</div>}
+              </section>
+            )}
 
-          {page === "Vendita" && (
-            <section className="section">
-              <div className="section-header">
-                <h2 className="section-title">Auto in Vendita</h2>
-                <div className="ornament"><div className="ornament-line" /><div className="ornament-dot" /><div className="ornament-line" /></div>
-                <p className="section-sub">{filteredSale.length} annunci disponibili</p>
-              </div>
-              <TagFilter tags={allTags} active={filterTag} onSelect={setFilterTag} />
-              {filteredSale.length === 0
-                ? <EmptyState text="Nessuna auto in vendita al momento." />
-                : <div className="grid-3">{filteredSale.map(car => <CarCard key={car.id} car={car} onClick={() => { setSelectedCar(car); setGalleryOpen(false); }} />)}</div>}
-            </section>
-          )}
+            {page === "Chi Siamo" && <ChiSiamo onContact={() => setPage("Contatti")} />}
 
-          {page === "Noleggio" && (
-            <section className="section">
-              <div className="section-header">
-                <h2 className="section-title">Auto a Noleggio</h2>
-                <div className="ornament"><div className="ornament-line" /><div className="ornament-dot" /><div className="ornament-line" /></div>
-                <p className="section-sub">Prezzi al giorno — disponibilità immediata</p>
-              </div>
-              <TagFilter tags={allTags} active={filterTag} onSelect={setFilterTag} />
-              {filteredRental.length === 0
-                ? <EmptyState text="Nessuna auto a noleggio al momento." />
-                : <div className="grid-3">{filteredRental.map(car => <CarCard key={car.id} car={car} onClick={() => { setSelectedCar(car); setGalleryOpen(false); }} />)}</div>}
-            </section>
-          )}
-
-          {page === "Chi Siamo" && (
-            <ChiSiamo onContact={() => setPage("Contatti")} />
-          )}
-
-          {page === "Contatti" && (
-            <section className="section">
-              <div className="section-header">
-                <h2 className="section-title">Contattaci</h2>
-                <div className="ornament"><div className="ornament-line" /><div className="ornament-dot" /><div className="ornament-line" /></div>
-                <p className="section-sub">Siamo a tua disposizione</p>
-              </div>
-              <div className="contact-card">
-                {[["📍", "Via Collatina 381, Roma (RM)"], ["📞", "393 000 8654 — 06 88922000"], ["✉️", "2erreprofessionalcar@libero.it"], ["🕐", "Lun–Sab: 9:00–19:00"]].map(([icon, text]) => (
-                  <div key={text} className="contact-item">
-                    <span className="contact-icon">{icon}</span>
-                    <span>{text}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-        </>
-      )}
+            {page === "Contatti" && (
+              <section className="section">
+                <div className="section-header">
+                  <h2 className="section-title">Contattaci</h2>
+                  <div className="ornament"><div className="ornament-line" /><div className="ornament-dot" /><div className="ornament-line" /></div>
+                  <p className="section-sub">Siamo a tua disposizione</p>
+                </div>
+                <div className="contact-card">
+                  {[["📍", "Via Collatina 381, Roma (RM)"], ["📞", "393 000 8654 — 06 88922000"], ["✉️", "2erreprofessionalcar@libero.it"], ["🕐", "Lun–Sab: 9:00–19:00"]].map(([icon, text]) => (
+                    <div key={text} className="contact-item">
+                      <span className="contact-icon">{icon}</span>
+                      <span>{text}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
+      </div>
 
       <footer className="footer">
         <p className="footer-logo"><span style={{ color: "#c9a84c" }}>2R</span> CAR</p>
@@ -1147,31 +1226,43 @@ export default function App() {
         {dbConnected && <p style={{ fontSize: "0.72rem", color: "#2ecc71", marginTop: "0.3rem" }}>● Database connesso</p>}
       </footer>
 
+      {/* ── Modal annuncio ── */}
       {selectedCar && (
         <Modal onClose={() => { setSelectedCar(null); setGalleryOpen(false); }}>
-          <div className="modal-img" onClick={() => setGalleryOpen(true)}>
-            <img src={selectedCar.images?.[0] || PLACEHOLDER} alt={selectedCar.model} />
-            {selectedCar.images?.length > 1 && (
-              <div className="modal-photo-count">📷 {selectedCar.images.length} foto — clicca per vedere tutte</div>
-            )}
-          </div>
+          <ModalGallery images={selectedCar.images} onZoom={openZoom} />
           <div className="modal-body">
             <div className="modal-tags">
               {(selectedCar.tags || []).map(t => <Tag key={t} label={t} />)}
-              <span className="tag" style={{ background: selectedCar.type === "noleggio" ? "#e67e22" : "#27ae60", color: "#fff" }}>
-                {selectedCar.type === "noleggio" ? "Noleggio" : "Vendita"}
+              <span className="tag" style={{
+                background: selectedCar.status === "venduta" ? "#e74c3c" : selectedCar.type === "noleggio" ? "#e67e22" : "#27ae60",
+                color: "#fff"
+              }}>
+                {selectedCar.status === "venduta" ? "Venduta" : selectedCar.type === "noleggio" ? "Noleggio" : "Vendita"}
               </span>
             </div>
             <h2 className="modal-title">{selectedCar.brand} {selectedCar.model}</h2>
             <p className="modal-year">{selectedCar.year} · {selectedCar.fuel} · {selectedCar.km?.toLocaleString()} km</p>
-            <p className="modal-price">{selectedCar.type === "noleggio" ? `€ ${selectedCar.price}/giorno` : `€ ${selectedCar.price?.toLocaleString()}`}</p>
-            <a href="tel:+393000008654" className="contact-call-btn">📞 Chiama per info</a>
+            {selectedCar.status !== "venduta" && (
+              <p className="modal-price">
+                {selectedCar.type === "noleggio" ? `€ ${selectedCar.price}/giorno` : `€ ${selectedCar.price?.toLocaleString()}`}
+              </p>
+            )}
+            {selectedCar.description && (
+              <p className="modal-description">{selectedCar.description}</p>
+            )}
+            {selectedCar.status !== "venduta"
+              ? <a href="tel:+393000008654" className="contact-call-btn">📞 Chiama per info</a>
+              : <div style={{ background: "#fdecea", color: "#e74c3c", borderRadius: "0.5rem", padding: "0.9em", textAlign: "center", fontWeight: 700 }}>Auto non più disponibile</div>
+            }
           </div>
         </Modal>
       )}
 
-      {selectedCar && galleryOpen && <PhotoGallery images={selectedCar.images} onClose={() => setGalleryOpen(false)} />}
+      {selectedCar && galleryOpen && (
+        <PhotoGallery images={selectedCar.images} startIdx={galleryStartIdx} onClose={() => setGalleryOpen(false)} />
+      )}
 
+      {/* ── Admin modal ── */}
       {adminOpen && (
         <Modal onClose={() => setAdminOpen(false)}>
           {!adminUser ? (
@@ -1218,6 +1309,12 @@ export default function App() {
                   <option value="vendita">Vendita</option>
                   <option value="noleggio">Noleggio</option>
                 </select>
+                <textarea
+                  placeholder="Descrizione (optional) — es: tagliando recente, gomme nuove, navigatore originale, un proprietario..."
+                  value={form.description}
+                  onChange={e => setForm({ ...form, description: e.target.value })}
+                  className="textarea-field"
+                />
                 <div className="tag-picker">
                   <span className="tag-picker-label">Tag</span>
                   <div className="tag-picker-grid">
@@ -1239,23 +1336,34 @@ export default function App() {
 
               <p className="admin-section-title" style={{ marginTop: "2rem" }}>📋 Gestisci Annunci ({cars.length})</p>
               <div className="admin-list">
-                {cars.map(car => (
-                  <div key={car.id} className="admin-list-item">
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                      <img src={car.images?.[0] || PLACEHOLDER} alt="" style={{ width: "3.25rem", height: "2.4rem", objectFit: "cover", borderRadius: "0.3rem", flexShrink: 0 }} />
-                      <div className="admin-list-info">
-                        <strong style={{ fontSize: "0.88rem" }}>{car.brand} {car.model}</strong>
-                        <span className="admin-list-sub">{car.year} · {car.type === "noleggio" ? `€${car.price}/g` : `€${car.price?.toLocaleString()}`} · {car.images?.length || 1} foto</span>
+                {cars.map(car => {
+                  const expired = isExpired(car);
+                  return (
+                    <div key={car.id} className="admin-list-item" style={{ opacity: expired ? 0.5 : 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                        <img src={car.images?.[0] || PLACEHOLDER} alt="" style={{ width: "3.25rem", height: "2.4rem", objectFit: "cover", borderRadius: "0.3rem", flexShrink: 0 }} />
+                        <div className="admin-list-info">
+                          <strong style={{ fontSize: "0.88rem" }}>{car.brand} {car.model}</strong>
+                          <span className="admin-list-sub">
+                            {car.year} · {car.status === "venduta" ? <span style={{ color: "#e74c3c" }}>VENDUTA{expired ? " (scaduta)" : ""}</span> : car.type === "noleggio" ? `€${car.price}/g` : `€${car.price?.toLocaleString()}`} · {car.images?.length || 1} foto
+                          </span>
+                        </div>
+                      </div>
+                      <div className="admin-list-actions">
+                        <button className="admin-action-btn"
+                          style={{ background: car.featured ? "#f39c12" : "#ecf0f1", color: car.featured ? "#fff" : "#333" }}
+                          onClick={() => toggleFeatured(car.id)} title="Vetrina">⭐</button>
+                        <button className="admin-action-btn"
+                          style={{ background: car.status === "venduta" ? "#e74c3c" : "#27ae60", color: "#fff", fontSize: "0.7rem", fontWeight: 700 }}
+                          onClick={() => toggleSold(car.id)}
+                          title={car.status === "venduta" ? "Segna come disponibile" : "Segna come venduta"}>
+                          {car.status === "venduta" ? "✓V" : "VND"}
+                        </button>
+                        <button className="admin-action-btn" style={{ background: "#e74c3c", color: "#fff" }} onClick={() => deleteCar(car.id)}>✕</button>
                       </div>
                     </div>
-                    <div className="admin-list-actions">
-                      <button className="admin-action-btn"
-                        style={{ background: car.featured ? "#f39c12" : "#ecf0f1", color: car.featured ? "#fff" : "#333" }}
-                        onClick={() => toggleFeatured(car.id)} title="Vetrina">⭐</button>
-                      <button className="admin-action-btn" style={{ background: "#e74c3c", color: "#fff" }} onClick={() => deleteCar(car.id)}>✕</button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
