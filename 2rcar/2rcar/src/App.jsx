@@ -1323,7 +1323,7 @@ export default function App() {
                 marginLeft: "0.5rem", transition: "background 0.15s",
               }}
               onClick={() => setAdminOpen(true)}>
-              {adminUser ? "Admin ✓" : "Admin ⚙"}
+              {adminUser ? "Admin ✓" : "Login"}
             </button>
           </div>
         </div>
