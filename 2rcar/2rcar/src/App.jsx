@@ -1486,7 +1486,7 @@ export default function App() {
             <div className="admin-login">
               <div className="login-icon">🔐</div>
               <h2 className="admin-title" style={{ textAlign: "center" }}>Login</h2>
-              <p className="login-sub">Effettua il login</p>
+              <p className="login-sub">Inserisci le credenziali</p>
               <form onSubmit={handleAdminLogin} style={{ width: "100%", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                 <input type="email" placeholder="Email admin" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="input" autoComplete="username" />
                 <input type="password" placeholder="Password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="input" autoComplete="current-password" />
