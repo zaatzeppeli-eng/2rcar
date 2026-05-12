@@ -670,7 +670,15 @@ function AdminCarForm({ initial, onSubmit, saving, uploading, title, submitLabel
             <option value="manuale">Manuale</option>
             <option value="automatico">Automatico</option>
           </select>
-          <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className="select-field">
+          <select value={form.type} onChange={e => {
+            const newType = e.target.value;
+            // If switching away from 'noleggio' and status is 'noleggiata', reset to 'disponibile'
+            setForm(prev => ({
+              ...prev,
+              type: newType,
+              status: (newType !== "noleggio" && prev.status === "noleggiata") ? "disponibile" : prev.status
+            }));
+          }} className="select-field">
             <option value="vendita">Vendita</option>
             <option value="noleggio">Noleggio</option>
           </select>
@@ -680,7 +688,7 @@ function AdminCarForm({ initial, onSubmit, saving, uploading, title, submitLabel
         <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="select-field">
           <option value="disponibile">Disponibile</option>
           <option value="venduta">Venduta</option>
-          <option value="noleggiata">Noleggiata</option>
+          {form.type === "noleggio" && <option value="noleggiata">Noleggiata</option>}
         </select>
 
         <textarea
@@ -1057,16 +1065,18 @@ export default function App() {
     }
     setUploading(false);
 
+    const sanitizedStatus = (form.status === "noleggiata" && form.type !== "noleggio") ? "disponibile" : (form.status || "disponibile");
+
     const newCar = {
       brand: form.brand, model: form.model,
       year: parseInt(form.year), price: parseFloat(form.price), km: parseInt(form.km),
       fuel: form.fuel, cambio: form.cambio, type: form.type,
-      status: form.status || "disponibile",
+      status: sanitizedStatus,
       features: form.features,
       featured: form.featured,
       images: imageUrls.length ? imageUrls : [PLACEHOLDER],
       description: form.description,
-      sold_at: form.status === "venduta" ? new Date().toISOString() : null,
+      sold_at: sanitizedStatus === "venduta" ? new Date().toISOString() : null,
     };
 
     if (dbConnected) {
@@ -1091,16 +1101,18 @@ export default function App() {
     }
     setUploading(false);
 
+    const sanitizedStatus = (form.status === "noleggiata" && form.type !== "noleggio") ? "disponibile" : form.status;
+
     const updates = {
       brand: form.brand, model: form.model,
       year: parseInt(form.year), price: parseFloat(form.price), km: parseInt(form.km),
       fuel: form.fuel, cambio: form.cambio, type: form.type,
-      status: form.status,
+      status: sanitizedStatus,
       features: form.features,
       featured: form.featured,
       images: imageUrls.length ? imageUrls : [PLACEHOLDER],
       description: form.description,
-      sold_at: form.status === "venduta"
+      sold_at: sanitizedStatus === "venduta"
         ? (editingCar.sold_at || new Date().toISOString())
         : null,
     };
@@ -1145,6 +1157,13 @@ export default function App() {
   async function toggleNoleggiata(id) {
     if (!adminUser) return;
     const car = cars.find(c => c.id === id);
+
+    // Only rental cars can be marked as noleggiata
+    if (car.type !== "noleggio") {
+      alert("Solo le auto di tipo NOLEGGIO possono essere marcate come noleggiata");
+      return;
+    }
+
     const newStatus = car.status === "noleggiata" ? "disponibile" : "noleggiata";
     setCars(prev => prev.map(c => c.id === id ? { ...c, status: newStatus } : c));
     if (dbConnected) await supabase.from("cars").update({ status: newStatus, sold_at: null }).eq("id", id);
@@ -1480,11 +1499,18 @@ export default function App() {
                           title={car.status==="venduta"?"Segna come disponibile":"Segna come venduta"}>
                           {car.status==="venduta"?"✓V":"VND"}
                         </button>
-                        {/* Noleggiata */}
+                        {/* Noleggiata (only enabled for type === "noleggio") */}
                         <button className="admin-action-btn"
-                          style={{ background:car.status==="noleggiata"?"#7f8c8d":"#ecf0f1",color:car.status==="noleggiata"?"#fff":"#333",fontSize:"0.65rem",fontWeight:700 }}
-                          onClick={() => toggleNoleggiata(car.id)}
-                          title={car.status==="noleggiata"?"Segna come disponibile":"Segna come noleggiata"}>
+                          style={{
+                            background:car.status==="noleggiata"?"#7f8c8d":"#ecf0f1",
+                            color:car.status==="noleggiata"?"#fff":"#333",
+                            fontSize:"0.65rem",
+                            fontWeight:700,
+                            opacity: car.type === "noleggio" ? 1 : 0.45,
+                            cursor: car.type === "noleggio" ? "pointer" : "not-allowed"
+                          }}
+                          onClick={() => { if (car.type === "noleggio") toggleNoleggiata(car.id); }}
+                          title={car.type === "noleggio" ? (car.status==="noleggiata"?"Segna come disponibile":"Segna come noleggiata") : "Solo per auto a noleggio"}>
                           {car.status==="noleggiata"?"✓N":"NLG"}
                         </button>
                         {/* Modifica */}
