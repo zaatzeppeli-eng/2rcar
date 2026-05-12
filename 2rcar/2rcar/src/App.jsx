@@ -835,7 +835,7 @@ function ChiSiamo({ onContact }) {
         <p className="chisiamo-hero-eyebrow">La nostra storia</p>
         <h1 className="chisiamo-hero-title">Chi siamo</h1>
         <p className="chisiamo-hero-sub">
-          Siamo una concessionaria indipendente a Roma, nata dalla passione per le auto e dal rispetto per i clienti. Niente fronzoli, niente sorprese: solo auto controllate e prezzi chiari.
+          Siamo un autosalone indipendente a Roma, nato dalla passione per le auto e dal rispetto per i clienti. Niente fronzoli, niente sorprese: solo auto controllate e prezzi chiari.
         </p>
       </div>
 
@@ -843,7 +843,7 @@ function ChiSiamo({ onContact }) {
         {[
           { num: "15+", label: "Anni di esperienza" },
           { num: "800+", label: "Auto vendute" },
-          { num: "4.8★", label: "Valutazione media" },
+          { num: "0%", label: "Stress" },
           { num: "100%", label: "Trasparenza" },
         ].map(s => (
           <div key={s.label} className="stat-block">
@@ -856,25 +856,25 @@ function ChiSiamo({ onContact }) {
       <section className="section">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 22rem), 1fr))", gap: "3rem", alignItems: "center" }}>
           <div>
-            <h2 className="section-title" style={{ textAlign: "left" }}>Una realtà di famiglia, nel cuore di Roma</h2>
+            <h2 className="section-title" style={{ textAlign: "left" }}>Una realtà di famiglia, qui a Roma</h2>
             <div className="ornament" style={{ justifyContent: "flex-start" }}>
               <div className="ornament-dot" />
               <div className="ornament-line" style={{ maxWidth: "6rem" }} />
             </div>
             <p style={{ color: "#555", lineHeight: 1.8, fontSize: "0.95rem", marginBottom: "1rem" }}>
-              Siamo su Via Collatina dal 2009. In questi anni abbiamo aiutato centinaia di famiglie romane a trovare l'auto giusta senza spendere troppo. Non lavoriamo con finanziamenti a tasso stellare né con auto dall'origine incerta.
+              Siamo su Via Collatina, in questi anni abbiamo aiutato centinaia di famiglie romane a trovare l'auto giusta senza spendere troppo. Non lavoriamo con finanziamenti a tasso stellare né con auto dall'origine incerta.
             </p>
             <p style={{ color: "#555", lineHeight: 1.8, fontSize: "0.95rem", marginBottom: "1rem" }}>
               Ogni auto che entra nel nostro piazzale viene ispezionata, controllata nella storia e fotografata per bene. Se c'è qualcosa che non va, te lo diciamo prima — non dopo.
             </p>
             <p style={{ color: "#555", lineHeight: 1.8, fontSize: "0.95rem" }}>
-              Trovi da noi utilitarie, berline, SUV e auto a noleggio per qualsiasi esigenza. Prezzi da 3.000 € in su, sempre trattabili.
+              Trovi da noi utilitarie, berline, SUV e auto a noleggio per qualsiasi esigenza.
             </p>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <div style={{ background: "#f0ede6", borderRadius: "0.75rem", padding: "1.5rem", borderLeft: "4px solid var(--gold)" }}>
               <p style={{ fontSize: "0.9rem", color: "#444", lineHeight: 1.7, fontStyle: "italic" }}>
-                "Ho comprato la mia Polo da 2R nel 2021. Il proprietario mi ha spiegato tutto, nessuna fretta, nessuna pressione. Un anno dopo è ancora perfetta."
+                "Ho comprato la mia Polo da 2Rcar nel 2021. Raffaele mi ha spiegato quello che volevo sapere senza fretta. Un anno dopo è ancora perfetta."
               </p>
               <p style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--navy)", marginTop: "0.6rem" }}>— Marco T., cliente dal 2021</p>
             </div>
@@ -897,7 +897,6 @@ function ChiSiamo({ onContact }) {
           <div className="values-grid">
             {[
               { icon: "🔍", title: "Controllo prima della vendita", text: "Ogni auto viene verificata meccanicamente e controllata nella storia chilometrica prima di essere esposta." },
-              { icon: "💬", title: "Prezzi trasparenti", text: "Il prezzo che vedi è quello reale. Nessuna sorpresa al momento della firma." },
               { icon: "🤝", title: "Trattativa senza pressione", text: "Non lavoriamo a provvigione aggressiva. Hai tutto il tempo che ti serve per decidere con calma." },
               { icon: "🚗", title: "Prova prima di comprare", text: "Puoi fare un giro di prova senza impegno, per valutare l'auto con la massima tranquillità." },
             ].map(v => (
