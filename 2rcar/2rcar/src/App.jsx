@@ -55,7 +55,7 @@ const GLOBAL_CSS = `
   --gold-muted:    rgba(201,168,76,0.18);
   --gold-glow:     rgba(201,168,76,0.08);
 
-  --cream:         #f7f5f0;
+  --cream:         #EEF1F5;
   --white:         #ffffff;
   --text:          #1a1a1a;
   --muted:         #888888;
