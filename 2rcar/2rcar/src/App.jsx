@@ -29,7 +29,475 @@ async function uploadImages(files) {
   return urls;
 }
 
-// ── Drag & Drop uploader con preview immediata ──
+// ── Global styles injected once ──
+const GLOBAL_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #1a1a2e;
+    --gold: #c9a84c;
+    --gold-light: #e8c96a;
+    --cream: #f7f5f0;
+    --white: #ffffff;
+    --text: #1a1a1a;
+    --muted: #888888;
+    --border: #e8e4dc;
+    --card-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    --nav-h: 4rem;
+  }
+
+  html { font-size: clamp(14px, 1.1vw, 17px); scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Beautiful custom scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--gold) 0%, var(--navy) 100%);
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+  * { scrollbar-width: thin; scrollbar-color: var(--gold) transparent; }
+
+  /* ── Nav hide/show animation ── */
+  .nav-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 200;
+    background: rgba(26,26,46,0.97);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 2px 32px rgba(0,0,0,0.25);
+    height: var(--nav-h);
+    transition: transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
+    will-change: transform;
+  }
+  .nav-bar.hidden { transform: translateY(-110%); }
+
+  .nav-inner {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    position: relative;
+    height: clamp(380px, 55vh, 640px);
+    background: url(https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1600&q=80) center/cover no-repeat;
+    display: flex;
+    align-items: center;
+  }
+  .hero-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(130deg, rgba(26,26,46,0.88) 0%, rgba(26,26,46,0.35) 100%);
+  }
+  .hero-content {
+    position: relative;
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    width: 100%;
+  }
+  .hero-eyebrow {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--gold);
+    letter-spacing: 0.28em;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+  }
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    color: #fff;
+    font-size: clamp(2rem, 5vw, 3.6rem);
+    font-weight: 900;
+    line-height: 1.15;
+    margin-bottom: 2rem;
+    text-shadow: 0 2px 24px rgba(0,0,0,0.4);
+    letter-spacing: -0.01em;
+  }
+  .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .hero-btn {
+    background: var(--gold);
+    border: none;
+    color: var(--navy);
+    padding: 0.85em 2.2em;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 3px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .hero-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .hero-btn-outline {
+    background: transparent;
+    border: 1.5px solid rgba(255,255,255,0.7);
+    color: #fff;
+  }
+  .hero-btn-outline:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
+
+  /* ── Sections ── */
+  .section { max-width: 72rem; margin: 0 auto; padding: clamp(2.5rem, 6vw, 5rem) 1.5rem; }
+  .section-header { text-align: center; margin-bottom: 2.5rem; }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+  }
+  .section-sub { color: var(--muted); font-size: 0.95rem; }
+
+  /* ── Grid ── */
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+    gap: 1.5rem;
+  }
+
+  /* ── Card ── */
+  .car-card {
+    background: var(--white);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s ease;
+    border: 1px solid var(--border);
+  }
+  .car-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.13); }
+  .card-img-wrap { position: relative; height: 12.5rem; overflow: hidden; }
+  .card-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease, opacity 0.15s; display: block; }
+  .car-card:hover .card-img { transform: scale(1.03); }
+  .card-badge {
+    position: absolute; top: 0.75rem; right: 0.75rem;
+    color: #fff; font-size: 0.65rem; font-weight: 700;
+    padding: 0.3em 0.75em; border-radius: 999px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .photo-dots { position: absolute; bottom: 0.6rem; left: 50%; transform: translateX(-50%); display: flex; gap: 0.3rem; }
+  .photo-dot { width: 5px; height: 5px; border-radius: 50%; transition: background 0.2s; }
+  .card-body { padding: 1.25rem; }
+  .card-tags { display: flex; gap: 0.4rem; margin-bottom: 0.6rem; flex-wrap: wrap; }
+  .card-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--navy); margin-bottom: 0.3rem; }
+  .card-sub { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.75rem; }
+  .card-price { font-family: 'Playfair Display', serif; font-size: 1.35rem; font-weight: 700; color: var(--gold); }
+  .card-price-sub { font-size: 0.75rem; color: var(--muted); font-weight: 400; font-family: 'DM Sans', sans-serif; }
+
+  .tag {
+    background: #f0ede6;
+    color: #666;
+    font-size: 0.7rem;
+    padding: 0.25em 0.65em;
+    border-radius: 999px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── Tag filter ── */
+  .tag-filter { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem; }
+  .tag-filter-btn {
+    background: var(--white);
+    border: 1px solid var(--border);
+    color: #666;
+    padding: 0.4em 1.1em;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    transition: all 0.18s;
+  }
+  .tag-filter-btn:hover { border-color: var(--gold); color: var(--navy); }
+  .tag-filter-btn.active { background: var(--navy); border-color: var(--navy); color: var(--gold); }
+
+  /* ── CTA strip ── */
+  .cta-strip {
+    background: var(--navy);
+    padding: clamp(2rem, 5vw, 3.5rem) 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .cta-inner { max-width: 72rem; margin: 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
+  .cta-title { font-family: 'Playfair Display', serif; color: #fff; font-size: clamp(1.1rem, 2.5vw, 1.5rem); font-weight: 700; margin-bottom: 0.3rem; }
+  .cta-sub { color: rgba(255,255,255,0.55); font-size: 0.9rem; }
+  .cta-button {
+    background: var(--gold);
+    border: none;
+    color: var(--navy);
+    padding: 0.85em 2em;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 3px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: background 0.2s, transform 0.15s;
+    flex-shrink: 0;
+  }
+  .cta-button:hover { background: var(--gold-light); transform: translateY(-1px); }
+
+  /* ── Contact ── */
+  .contact-card {
+    background: var(--white);
+    border-radius: 0.75rem;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    max-width: 32rem;
+    margin: 0 auto;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .contact-item { display: flex; align-items: center; gap: 1rem; font-size: 1rem; line-height: 1.4; }
+  .contact-icon { font-size: 1.4rem; width: 2rem; flex-shrink: 0; }
+
+  /* ── Footer ── */
+  .footer {
+    background: #111;
+    color: #555;
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+  }
+  .footer-logo { font-family: 'Playfair Display', serif; font-size: 1.3rem; letter-spacing: 0.12em; margin-bottom: 0.5rem; }
+  .footer-sub { font-size: 0.78rem; }
+
+  /* ── Modal ── */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  .modal {
+    background: var(--white);
+    border-radius: 1rem;
+    width: 100%;
+    max-width: 36rem;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+  }
+  .modal-close {
+    position: absolute; top: 1rem; right: 1rem;
+    background: rgba(0,0,0,0.08); border: none; border-radius: 50%;
+    width: 2rem; height: 2rem; cursor: pointer; z-index: 10;
+    font-size: 0.85rem; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .modal-close:hover { background: rgba(0,0,0,0.15); }
+  .modal-img { height: 15rem; overflow: hidden; border-radius: 1rem 1rem 0 0; position: relative; cursor: zoom-in; }
+  .modal-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s; }
+  .modal-img:hover img { transform: scale(1.03); }
+  .modal-photo-count {
+    position: absolute; bottom: 0.75rem; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.6); color: #fff; font-size: 0.75rem;
+    padding: 0.3em 0.9em; border-radius: 999px; white-space: nowrap; backdrop-filter: blur(4px);
+  }
+  .modal-body { padding: 1.75rem; }
+  .modal-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; color: var(--navy); margin-bottom: 0.3rem; }
+  .modal-year { color: var(--muted); font-size: 0.88rem; margin-bottom: 1rem; }
+  .modal-price { font-family: 'Playfair Display', serif; font-size: 1.9rem; font-weight: 700; color: var(--gold); margin-bottom: 1.5rem; }
+  .contact-call-btn {
+    display: block; background: var(--navy); color: var(--gold);
+    text-align: center; padding: 0.9em; border-radius: 0.5rem;
+    font-weight: 700; text-decoration: none; font-size: 1rem;
+    letter-spacing: 0.04em; transition: background 0.18s;
+  }
+  .contact-call-btn:hover { background: #2a2a4e; }
+
+  /* ── Gallery ── */
+  .gallery-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.95);
+    z-index: 2000;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .gallery-box { position: relative; max-width: 56rem; width: 100%; padding: 3rem 1.5rem 1.5rem; }
+  .gallery-close {
+    position: absolute; top: 0.5rem; right: 0.75rem;
+    background: rgba(255,255,255,0.1); border: none; color: #fff;
+    border-radius: 50%; width: 2.25rem; height: 2.25rem;
+    cursor: pointer; font-size: 1.1rem; z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .gallery-close:hover { background: rgba(255,255,255,0.2); }
+  .gallery-main { width: 100%; max-height: 65vh; object-fit: contain; border-radius: 0.5rem; display: block; margin: 0 auto; }
+  .gallery-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(255,255,255,0.12); border: none; color: #fff;
+    border-radius: 50%; width: 2.75rem; height: 2.75rem;
+    font-size: 1.75rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .gallery-nav:hover { background: rgba(255,255,255,0.22); }
+  .gallery-thumbs { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap; }
+  .gallery-thumb { width: 4rem; height: 3rem; object-fit: cover; border-radius: 0.25rem; cursor: pointer; opacity: 0.45; transition: opacity 0.2s; }
+  .gallery-thumb.active { opacity: 1; outline: 2px solid var(--gold); }
+  .gallery-counter { text-align: center; color: #666; font-size: 0.8rem; margin-top: 0.6rem; }
+
+  /* ── Admin ── */
+  .admin-login { padding: 2rem; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; }
+  .login-icon { font-size: 2.5rem; }
+  .login-sub { color: var(--muted); font-size: 0.82rem; text-align: center; }
+  .auth-error { background: #fdecea; color: #e74c3c; border-radius: 0.4rem; padding: 0.5em 0.75em; font-size: 0.82rem; text-align: center; width: 100%; }
+  .admin-panel { padding: 1.75rem; }
+  .admin-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; color: var(--navy); }
+  .admin-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem; }
+  .admin-user-badge { color: #27ae60; font-size: 0.75rem; margin-top: 0.25rem; font-family: monospace; }
+  .logout-btn {
+    background: #f8f8f8; border: 1px solid var(--border); color: #666;
+    padding: 0.4em 0.9em; border-radius: 0.4rem; cursor: pointer;
+    font-size: 0.82rem; font-family: 'DM Sans', sans-serif; transition: background 0.15s;
+  }
+  .logout-btn:hover { background: #eee; }
+  .admin-section-title { font-size: 0.75rem; font-weight: 700; color: #aaa; margin: 0 0 1rem; text-transform: uppercase; letter-spacing: 0.1em; }
+  .admin-form { display: flex; flex-direction: column; gap: 0.75rem; }
+  .form-row { display: flex; gap: 0.75rem; }
+  .input, .select-field {
+    flex: 1; padding: 0.65em 0.9em; border-radius: 0.5rem;
+    border: 1px solid var(--border); font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem; outline: none; background: var(--white);
+    transition: border-color 0.18s, box-shadow 0.18s;
+    min-width: 0;
+  }
+  .input:focus, .select-field:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
+  .tag-picker { background: #f8f8f8; border-radius: 0.5rem; padding: 0.9rem; }
+  .tag-picker-label { font-size: 0.72rem; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; display: block; }
+  .tag-picker-grid { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .tag-picker-btn {
+    background: var(--white); border: 1px solid var(--border);
+    padding: 0.3em 0.75em; border-radius: 999px; cursor: pointer;
+    font-size: 0.75rem; font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+  }
+  .tag-picker-btn:hover { border-color: var(--gold); }
+  .tag-picker-btn.active { background: var(--navy); border-color: var(--navy); color: var(--gold); }
+  .dropzone {
+    border: 2px dashed var(--border); border-radius: 0.6rem;
+    padding: 1.5rem 1rem; text-align: center; cursor: pointer;
+    background: #fafafa; transition: all 0.2s;
+  }
+  .dropzone.dragging { border-color: var(--gold); background: #fffbf0; }
+  .dropzone-text { color: var(--muted); font-size: 0.88rem; line-height: 1.8; }
+  .preview-grid { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.6rem; }
+  .preview-item { position: relative; width: 5rem; height: 3.75rem; }
+  .preview-img { width: 100%; height: 100%; object-fit: cover; border-radius: 0.4rem; display: block; }
+  .preview-remove {
+    position: absolute; top: -0.4rem; right: -0.4rem;
+    background: #e74c3c; border: none; color: #fff;
+    border-radius: 50%; width: 1.2rem; height: 1.2rem;
+    font-size: 0.6rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .preview-main { position: absolute; bottom: 0.1rem; left: 0.15rem; background: rgba(0,0,0,0.6); color: #fff; font-size: 0.55rem; padding: 0.1em 0.3em; border-radius: 0.2rem; }
+  .check-label { font-size: 0.88rem; display: flex; align-items: center; cursor: pointer; gap: 0.4rem; }
+  .submit-btn {
+    background: var(--navy); color: var(--gold);
+    border: none; padding: 0.8em;
+    border-radius: 0.5rem; font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem; font-weight: 700; cursor: pointer;
+    letter-spacing: 0.04em; transition: background 0.18s, opacity 0.18s;
+  }
+  .submit-btn:hover:not(:disabled) { background: #2a2a4e; }
+  .admin-list { display: flex; flex-direction: column; gap: 0.6rem; max-height: 18rem; overflow-y: auto; }
+  .admin-list-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.7rem 0.9rem; background: #f8f8f8;
+    border-radius: 0.5rem; border: 1px solid var(--border);
+  }
+  .admin-list-info { display: flex; flex-direction: column; gap: 0.15rem; }
+  .admin-list-sub { font-size: 0.75rem; color: var(--muted); }
+  .admin-list-actions { display: flex; gap: 0.5rem; }
+  .admin-action-btn { border: none; border-radius: 0.4rem; width: 2rem; height: 2rem; cursor: pointer; font-size: 0.9rem; transition: opacity 0.15s; display: flex; align-items: center; justify-content: center; }
+  .admin-action-btn:hover { opacity: 0.8; }
+
+  /* ── Loading ── */
+  .loading-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 20rem; gap: 1rem; color: var(--muted); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { width: 2.5rem; height: 2.5rem; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+  /* ── Banner ── */
+  .banner { background: #e67e22; color: #fff; text-align: center; padding: 0.65rem 1rem; font-size: 0.85rem; font-weight: 500; }
+
+  /* ── Divider ornament ── */
+  .ornament { display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin: 0 0 2rem; }
+  .ornament-line { flex: 1; max-width: 4rem; height: 1px; background: var(--gold); opacity: 0.4; }
+  .ornament-dot { width: 0.4rem; height: 0.4rem; background: var(--gold); border-radius: 50%; }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .form-row { flex-direction: column; }
+    .hero-btns { flex-direction: column; }
+    .cta-inner { flex-direction: column; align-items: flex-start; }
+  }
+`;
+
+// ── Inject global styles ──
+function GlobalStyles() {
+  useEffect(() => {
+    const id = "2r-global-css";
+    if (document.getElementById(id)) return;
+    const style = document.createElement("style");
+    style.id = id;
+    style.textContent = GLOBAL_CSS;
+    document.head.appendChild(style);
+    return () => document.getElementById(id)?.remove();
+  }, []);
+  return null;
+}
+
+// ── Auto-hide navbar hook ──
+function useNavHide() {
+  const [hidden, setHidden] = useState(false);
+  const lastY = useRef(0);
+  useEffect(() => {
+    function onScroll() {
+      const y = window.scrollY;
+      if (y < 60) { setHidden(false); }
+      else if (y > lastY.current + 4) { setHidden(true); }
+      else if (y < lastY.current - 4) { setHidden(false); }
+      lastY.current = y;
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return hidden;
+}
+
+// ── Drag & Drop uploader ──
 function ImageUploader({ previews, setPreviews, setUploadedFiles, uploading }) {
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef();
@@ -37,12 +505,10 @@ function ImageUploader({ previews, setPreviews, setUploadedFiles, uploading }) {
   function handleFiles(files) {
     const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
     if (!imageFiles.length) return;
-    // Preview locale istantanea
     const localUrls = imageFiles.map(f => ({ url: URL.createObjectURL(f), file: f }));
     setPreviews(prev => [...prev, ...localUrls]);
     setUploadedFiles(prev => [...prev, ...imageFiles]);
   }
-
   function removePreview(i) {
     setPreviews(prev => prev.filter((_, j) => j !== i));
     setUploadedFiles(prev => prev.filter((_, j) => j !== i));
@@ -51,7 +517,7 @@ function ImageUploader({ previews, setPreviews, setUploadedFiles, uploading }) {
   return (
     <div>
       <div
-        style={{ ...styles.dropzone, ...(dragging ? styles.dropzoneActive : {}) }}
+        className={`dropzone${dragging ? " dragging" : ""}`}
         onDragOver={e => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={e => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
@@ -59,18 +525,17 @@ function ImageUploader({ previews, setPreviews, setUploadedFiles, uploading }) {
       >
         <input ref={inputRef} type="file" multiple accept="image/*" style={{ display: "none" }}
           onChange={e => handleFiles(e.target.files)} />
-        {uploading
-          ? <p style={styles.dropzoneText}>⏳ Upload in corso...</p>
-          : <p style={styles.dropzoneText}>📷 Trascina le foto qui oppure clicca per selezionarle<br /><span style={{ fontSize: 12, color: "#aaa" }}>Puoi caricare più foto alla volta</span></p>
-        }
+        <p className="dropzone-text">
+          {uploading ? "⏳ Upload in corso..." : <>📷 Trascina le foto qui oppure clicca<br /><span style={{ fontSize: "0.75rem", color: "#bbb" }}>Puoi caricare più foto alla volta</span></>}
+        </p>
       </div>
       {previews.length > 0 && (
-        <div style={styles.previewGrid}>
+        <div className="preview-grid">
           {previews.map((item, i) => (
-            <div key={i} style={styles.previewItem}>
-              <img src={item.url} alt="" style={styles.previewImg} />
-              <button type="button" style={styles.previewRemove} onClick={() => removePreview(i)}>✕</button>
-              {i === 0 && <span style={styles.previewMain}>Copertina</span>}
+            <div key={i} className="preview-item">
+              <img src={item.url} alt="" className="preview-img" />
+              <button type="button" className="preview-remove" onClick={() => removePreview(i)}>✕</button>
+              {i === 0 && <span className="preview-main">Copertina</span>}
             </div>
           ))}
         </div>
@@ -79,7 +544,7 @@ function ImageUploader({ previews, setPreviews, setUploadedFiles, uploading }) {
   );
 }
 
-// ── Card con hover gallery ──
+// ── Car Card ──
 function CarCard({ car, onClick }) {
   const images = car.images?.length ? car.images : [PLACEHOLDER];
   const [imgIdx, setImgIdx] = useState(0);
@@ -88,45 +553,40 @@ function CarCard({ car, onClick }) {
   function handleMouseEnter() {
     if (images.length <= 1) return;
     let i = 0;
-    intervalRef.current = setInterval(() => {
-      i = (i + 1) % images.length;
-      setImgIdx(i);
-    }, 700);
+    intervalRef.current = setInterval(() => { i = (i + 1) % images.length; setImgIdx(i); }, 700);
   }
-
-  function handleMouseLeave() {
-    clearInterval(intervalRef.current);
-    setImgIdx(0);
-  }
+  function handleMouseLeave() { clearInterval(intervalRef.current); setImgIdx(0); }
 
   return (
-    <div style={styles.card} onClick={onClick} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-      <div style={styles.cardImgWrap}>
-        <img src={images[imgIdx]} alt={car.model} style={styles.cardImg} />
-        <div style={{ ...styles.cardBadge, background: car.type === "noleggio" ? "#e67e22" : "#1a1a2e" }}>
+    <div className="car-card" onClick={onClick} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <div className="card-img-wrap">
+        <img src={images[imgIdx]} alt={car.model} className="card-img" />
+        <div className="card-badge" style={{ background: car.type === "noleggio" ? "#e67e22" : "#1a1a2e" }}>
           {car.type === "noleggio" ? "Noleggio" : "Vendita"}
         </div>
         {images.length > 1 && (
-          <div style={styles.photoDots}>
+          <div className="photo-dots">
             {images.map((_, i) => (
-              <div key={i} style={{ ...styles.photoDot, background: i === imgIdx ? "#c9a84c" : "rgba(255,255,255,0.6)" }} />
+              <div key={i} className="photo-dot" style={{ background: i === imgIdx ? "#c9a84c" : "rgba(255,255,255,0.6)" }} />
             ))}
           </div>
         )}
       </div>
-      <div style={styles.cardBody}>
-        <div style={styles.cardTags}>{(car.tags || []).slice(0, 2).map(t => <Tag key={t} label={t} />)}</div>
-        <h3 style={styles.cardTitle}>{car.brand} {car.model}</h3>
-        <p style={styles.cardSub}>{car.year} · {car.fuel} · {car.km?.toLocaleString()} km</p>
-        <p style={styles.cardPrice}>
-          {car.type === "noleggio" ? <>€ {car.price}<span style={styles.cardPriceSub}>/giorno</span></> : `€ ${car.price?.toLocaleString()}`}
+      <div className="card-body">
+        <div className="card-tags">{(car.tags || []).slice(0, 2).map(t => <Tag key={t} label={t} />)}</div>
+        <h3 className="card-title">{car.brand} {car.model}</h3>
+        <p className="card-sub">{car.year} · {car.fuel} · {car.km?.toLocaleString()} km</p>
+        <p className="card-price">
+          {car.type === "noleggio"
+            ? <>€ {car.price}<span className="card-price-sub">/giorno</span></>
+            : `€ ${car.price?.toLocaleString()}`}
         </p>
       </div>
     </div>
   );
 }
 
-// ── Galleria foto modal ──
+// ── Photo Gallery Modal ──
 function PhotoGallery({ images, onClose }) {
   const [idx, setIdx] = useState(0);
   const imgs = images?.length ? images : [PLACEHOLDER];
@@ -141,21 +601,20 @@ function PhotoGallery({ images, onClose }) {
   }, [imgs.length]);
 
   return (
-    <div style={styles.galleryOverlay} onClick={onClose}>
-      <div style={styles.galleryBox} onClick={e => e.stopPropagation()}>
-        <button style={styles.galleryClose} onClick={onClose}>✕</button>
-        <img src={imgs[idx]} alt="" style={styles.galleryMain} />
+    <div className="gallery-overlay" onClick={onClose}>
+      <div className="gallery-box" onClick={e => e.stopPropagation()}>
+        <button className="gallery-close" onClick={onClose}>✕</button>
+        <img src={imgs[idx]} alt="" className="gallery-main" />
         {imgs.length > 1 && (
           <>
-            <button style={{ ...styles.galleryNav, left: 12 }} onClick={() => setIdx((idx - 1 + imgs.length) % imgs.length)}>‹</button>
-            <button style={{ ...styles.galleryNav, right: 12 }} onClick={() => setIdx((idx + 1) % imgs.length)}>›</button>
-            <div style={styles.galleryThumbs}>
+            <button className="gallery-nav" style={{ left: "0.75rem" }} onClick={() => setIdx((idx - 1 + imgs.length) % imgs.length)}>‹</button>
+            <button className="gallery-nav" style={{ right: "0.75rem" }} onClick={() => setIdx((idx + 1) % imgs.length)}>›</button>
+            <div className="gallery-thumbs">
               {imgs.map((url, i) => (
-                <img key={i} src={url} alt="" onClick={() => setIdx(i)}
-                  style={{ ...styles.galleryThumb, ...(i === idx ? styles.galleryThumbActive : {}) }} />
+                <img key={i} src={url} alt="" onClick={() => setIdx(i)} className={`gallery-thumb${i === idx ? " active" : ""}`} />
               ))}
             </div>
-            <p style={styles.galleryCounter}>{idx + 1} / {imgs.length}</p>
+            <p className="gallery-counter">{idx + 1} / {imgs.length}</p>
           </>
         )}
       </div>
@@ -183,6 +642,8 @@ export default function App() {
   const [formFiles, setFormFiles] = useState([]);
   const [form, setForm] = useState({ brand: "", model: "", year: "", price: "", km: "", fuel: "Benzina", type: "vendita", tags: [], featured: false });
 
+  const navHidden = useNavHide();
+
   useEffect(() => {
     loadCars();
     supabase.auth.getSession().then(({ data: { session } }) => setAdminUser(session?.user ?? null));
@@ -206,18 +667,14 @@ export default function App() {
 
   async function handleAdminLogin(e) {
     e.preventDefault();
-    setAuthLoading(true);
-    setAuthError("");
+    setAuthLoading(true); setAuthError("");
     const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword });
     if (error) setAuthError("Credenziali errate. Riprova.");
     else { setLoginEmail(""); setLoginPassword(""); }
     setAuthLoading(false);
   }
 
-  async function handleAdminLogout() {
-    await supabase.auth.signOut();
-    setAdminOpen(false);
-  }
+  async function handleAdminLogout() { await supabase.auth.signOut(); setAdminOpen(false); }
 
   async function toggleFeatured(id) {
     if (!adminUser) return;
@@ -226,44 +683,30 @@ export default function App() {
     let updates = [];
     if (!car.featured && currentFeatured.length >= 3) {
       updates = [{ id: currentFeatured[0].id, featured: false }, { id, featured: true }];
-    } else {
-      updates = [{ id, featured: !car.featured }];
-    }
+    } else { updates = [{ id, featured: !car.featured }]; }
     setCars(prev => prev.map(c => { const u = updates.find(x => x.id === c.id); return u ? { ...c, featured: u.featured } : c; }));
     if (dbConnected) for (const u of updates) await supabase.from("cars").update({ featured: u.featured }).eq("id", u.id);
   }
 
   async function handleAddCar(e) {
-    e.preventDefault();
-    if (!adminUser) return;
-    setSaving(true);
-    setUploading(true);
-
-    // Upload reale su Supabase Storage
+    e.preventDefault(); if (!adminUser) return;
+    setSaving(true); setUploading(true);
     let imageUrls = [];
-    if (formFiles.length > 0) {
-      imageUrls = await uploadImages(formFiles);
-    }
+    if (formFiles.length > 0) imageUrls = await uploadImages(formFiles);
     setUploading(false);
-
     const newCar = {
-      brand: form.brand, model: form.model,
-      year: parseInt(form.year), price: parseFloat(form.price), km: parseInt(form.km),
+      brand: form.brand, model: form.model, year: parseInt(form.year),
+      price: parseFloat(form.price), km: parseInt(form.km),
       fuel: form.fuel, type: form.type, tags: form.tags, featured: form.featured,
       images: imageUrls.length ? imageUrls : [PLACEHOLDER],
     };
-
     if (dbConnected) {
       const { data, error } = await supabase.from("cars").insert([newCar]).select().single();
       if (error) { alert("Errore DB: " + error.message); setSaving(false); return; }
       setCars(prev => [data, ...prev]);
-    } else {
-      setCars(prev => [{ ...newCar, id: Date.now() }, ...prev]);
-    }
-
+    } else { setCars(prev => [{ ...newCar, id: Date.now() }, ...prev]); }
     setForm({ brand: "", model: "", year: "", price: "", km: "", fuel: "Benzina", type: "vendita", tags: [], featured: false });
-    setFormPreviews([]);
-    setFormFiles([]);
+    setFormPreviews([]); setFormFiles([]);
     setSaving(false);
     alert("Annuncio aggiunto!");
   }
@@ -285,94 +728,141 @@ export default function App() {
   const filteredSale = filterTag ? saleCars.filter(c => c.tags?.includes(filterTag)) : saleCars;
   const filteredRental = filterTag ? rentalCars.filter(c => c.tags?.includes(filterTag)) : rentalCars;
   const allTags = [...new Set(cars.flatMap(c => c.tags || []))];
-  const s = styles;
 
   return (
-    <div style={s.root}>
-      {!dbConnected && !loading && <div style={s.banner}>⚠️ Modalità demo — Supabase non configurato</div>}
+    <div style={{ paddingTop: "var(--nav-h)" }}>
+      <GlobalStyles />
 
-      <nav style={s.nav}>
-        <div style={s.navInner}>
-          <div style={s.logo} onClick={() => { setPage("Home"); setFilterTag(null); }}>
-            <span style={s.logoAccent}>2R</span><span style={s.logoText}> CAR</span>
+      {!dbConnected && !loading && <div className="banner">⚠️ Modalità demo — Supabase non configurato</div>}
+
+      {/* ── Navbar ── */}
+      <nav className={`nav-bar${navHidden ? " hidden" : ""}`}>
+        <div className="nav-inner">
+          <div style={{ cursor: "pointer", letterSpacing: "0.12em", fontSize: "1.25rem", display: "flex", alignItems: "center", gap: "0.15em" }}
+            onClick={() => { setPage("Home"); setFilterTag(null); }}>
+            <span style={{ color: "#c9a84c", fontFamily: "'Playfair Display', serif", fontWeight: 900 }}>2R</span>
+            <span style={{ color: "#fff", fontFamily: "'DM Sans', sans-serif", fontWeight: 300, letterSpacing: "0.18em", fontSize: "0.85em" }}>CAR</span>
           </div>
-          <div style={s.navLinks}>
+          <div style={{ display: "flex", gap: "0.25rem", alignItems: "center" }}>
             {NAV_ITEMS.map(item => (
-              <button key={item} style={{ ...s.navBtn, ...(page === item ? s.navBtnActive : {}) }} onClick={() => { setPage(item); setFilterTag(null); }}>{item}</button>
+              <button key={item}
+                style={{
+                  background: "none", border: "none",
+                  color: page === item ? "#c9a84c" : "#bbb",
+                  cursor: "pointer", fontSize: "0.82rem",
+                  padding: "0.5em 0.9em", borderRadius: "0.4rem",
+                  letterSpacing: "0.04em", fontFamily: "'DM Sans', sans-serif",
+                  fontWeight: page === item ? 600 : 400,
+                  background: page === item ? "rgba(201,168,76,0.1)" : "none",
+                  transition: "color 0.15s, background 0.15s",
+                }}
+                onClick={() => { setPage(item); setFilterTag(null); }}>{item}</button>
             ))}
-            <button style={s.adminBtn} onClick={() => setAdminOpen(true)}>{adminUser ? "Admin ✓" : "Admin ⚙"}</button>
+            <button
+              style={{
+                background: "rgba(201,168,76,0.15)",
+                border: "1px solid rgba(201,168,76,0.5)",
+                color: "#c9a84c", cursor: "pointer",
+                fontSize: "0.78rem", padding: "0.4em 0.9em",
+                borderRadius: "0.4rem", fontFamily: "'DM Sans', sans-serif",
+                fontWeight: 600, letterSpacing: "0.04em",
+                marginLeft: "0.5rem", transition: "background 0.15s",
+              }}
+              onClick={() => setAdminOpen(true)}>
+              {adminUser ? "Admin ✓" : "Admin ⚙"}
+            </button>
           </div>
         </div>
       </nav>
 
-      {loading && <div style={s.loadingScreen}><div style={s.spinner} /><p style={{ color: "#888", marginTop: 16 }}>Caricamento...</p></div>}
+      {loading && (
+        <div className="loading-screen">
+          <div className="spinner" />
+          <p>Caricamento...</p>
+        </div>
+      )}
 
       {!loading && (
         <>
           {page === "Home" && (
             <>
-              <div style={s.hero}>
-                <div style={s.heroOverlay} />
-                <div style={s.heroContent}>
-                  <p style={s.heroEyebrow}>Vendita & Noleggio Auto</p>
-                  <h1 style={s.heroTitle}>La tua prossima auto<br />ti aspetta qui.</h1>
-                  <div style={s.heroBtns}>
-                    <button style={s.heroBtn} onClick={() => setPage("Vendita")}>Acquista</button>
-                    <button style={{ ...s.heroBtn, ...s.heroBtnOutline }} onClick={() => setPage("Noleggio")}>Noleggia</button>
+              <div className="hero">
+                <div className="hero-overlay" />
+                <div className="hero-content">
+                  <p className="hero-eyebrow">Vendita &amp; Noleggio Auto · Roma</p>
+                  <h1 className="hero-title">La tua prossima auto<br />ti aspetta qui.</h1>
+                  <div className="hero-btns">
+                    <button className="hero-btn" onClick={() => setPage("Vendita")}>Acquista</button>
+                    <button className="hero-btn hero-btn-outline" onClick={() => setPage("Noleggio")}>Noleggia</button>
                   </div>
                 </div>
               </div>
-              <section style={s.section}>
-                <div style={s.sectionHeader}>
-                  <h2 style={s.sectionTitle}>In Vetrina</h2>
-                  <p style={s.sectionSub}>Le auto del momento selezionate per te</p>
+
+              <section className="section">
+                <div className="section-header">
+                  <h2 className="section-title">In Vetrina</h2>
+                  <div className="ornament"><div className="ornament-line" /><div className="ornament-dot" /><div className="ornament-line" /></div>
+                  <p className="section-sub">Le auto del momento selezionate per te</p>
                 </div>
                 {featuredCars.length === 0
-                  ? <p style={{ textAlign: "center", color: "#aaa", padding: "40px 0" }}>Nessuna auto in vetrina</p>
-                  : <div style={s.grid3}>{featuredCars.map(car => <CarCard key={car.id} car={car} onClick={() => { setSelectedCar(car); setGalleryOpen(false); }} />)}</div>
+                  ? <p style={{ textAlign: "center", color: "#aaa", padding: "2.5rem 0" }}>Nessuna auto in vetrina</p>
+                  : <div className="grid-3">{featuredCars.map(car => <CarCard key={car.id} car={car} onClick={() => { setSelectedCar(car); setGalleryOpen(false); }} />)}</div>
                 }
               </section>
-              <div style={s.ctaStrip}>
-                <div style={s.ctaLeft}>
-                  <h3 style={s.ctaTitle}>Hai bisogno di un'auto per qualche giorno?</h3>
-                  <p style={s.ctaSub}>Noleggio flessibile, disponibile subito.</p>
+
+              <div className="cta-strip">
+                <div className="cta-inner">
+                  <div>
+                    <h3 className="cta-title">Hai bisogno di un'auto per qualche giorno?</h3>
+                    <p className="cta-sub">Noleggio flessibile, disponibile subito.</p>
+                  </div>
+                  <button className="cta-button" onClick={() => setPage("Noleggio")}>Vedi il noleggio →</button>
                 </div>
-                <button style={s.ctaButton} onClick={() => setPage("Noleggio")}>Vedi il noleggio →</button>
               </div>
             </>
           )}
 
           {page === "Vendita" && (
-            <section style={s.section}>
-              <div style={s.sectionHeader}>
-                <h2 style={s.sectionTitle}>Auto in Vendita</h2>
-                <p style={s.sectionSub}>{filteredSale.length} annunci disponibili</p>
+            <section className="section">
+              <div className="section-header">
+                <h2 className="section-title">Auto in Vendita</h2>
+                <div className="ornament"><div className="ornament-line" /><div className="ornament-dot" /><div className="ornament-line" /></div>
+                <p className="section-sub">{filteredSale.length} annunci disponibili</p>
               </div>
               <TagFilter tags={allTags} active={filterTag} onSelect={setFilterTag} />
-              {filteredSale.length === 0 ? <EmptyState text="Nessuna auto in vendita al momento." /> : <div style={s.grid3}>{filteredSale.map(car => <CarCard key={car.id} car={car} onClick={() => { setSelectedCar(car); setGalleryOpen(false); }} />)}</div>}
+              {filteredSale.length === 0
+                ? <EmptyState text="Nessuna auto in vendita al momento." />
+                : <div className="grid-3">{filteredSale.map(car => <CarCard key={car.id} car={car} onClick={() => { setSelectedCar(car); setGalleryOpen(false); }} />)}</div>}
             </section>
           )}
 
           {page === "Noleggio" && (
-            <section style={s.section}>
-              <div style={s.sectionHeader}>
-                <h2 style={s.sectionTitle}>Auto a Noleggio</h2>
-                <p style={s.sectionSub}>Prezzi al giorno — disponibilità immediata</p>
+            <section className="section">
+              <div className="section-header">
+                <h2 className="section-title">Auto a Noleggio</h2>
+                <div className="ornament"><div className="ornament-line" /><div className="ornament-dot" /><div className="ornament-line" /></div>
+                <p className="section-sub">Prezzi al giorno — disponibilità immediata</p>
               </div>
               <TagFilter tags={allTags} active={filterTag} onSelect={setFilterTag} />
-              {filteredRental.length === 0 ? <EmptyState text="Nessuna auto a noleggio al momento." /> : <div style={s.grid3}>{filteredRental.map(car => <CarCard key={car.id} car={car} onClick={() => { setSelectedCar(car); setGalleryOpen(false); }} />)}</div>}
+              {filteredRental.length === 0
+                ? <EmptyState text="Nessuna auto a noleggio al momento." />
+                : <div className="grid-3">{filteredRental.map(car => <CarCard key={car.id} car={car} onClick={() => { setSelectedCar(car); setGalleryOpen(false); }} />)}</div>}
             </section>
           )}
 
           {page === "Contatti" && (
-            <section style={s.section}>
-              <div style={s.sectionHeader}>
-                <h2 style={s.sectionTitle}>Contattaci</h2>
-                <p style={s.sectionSub}>Siamo a tua disposizione</p>
+            <section className="section">
+              <div className="section-header">
+                <h2 className="section-title">Contattaci</h2>
+                <div className="ornament"><div className="ornament-line" /><div className="ornament-dot" /><div className="ornament-line" /></div>
+                <p className="section-sub">Siamo a tua disposizione</p>
               </div>
-              <div style={s.contactCard}>
+              <div className="contact-card">
                 {[["📍", "Via Collatina 381, Roma (RM)"], ["📞", "393 000 8654 — 06 88922000"], ["✉️", "2erreprofessionalcar@libero.it"], ["🕐", "Lun–Sab: 9:00–19:00"]].map(([icon, text]) => (
-                  <div key={text} style={s.contactItem}><span style={s.contactIcon}>{icon}</span><span>{text}</span></div>
+                  <div key={text} className="contact-item">
+                    <span className="contact-icon">{icon}</span>
+                    <span>{text}</span>
+                  </div>
                 ))}
               </div>
             </section>
@@ -380,123 +870,120 @@ export default function App() {
         </>
       )}
 
-      <footer style={s.footer}>
-        <p style={s.footerLogo}><span style={s.logoAccent}>2R</span> CAR</p>
-        <p style={s.footerSub}>Via Collatina, 381 — Roma</p>
-        {dbConnected && <p style={{ ...s.footerSub, color: "#2ecc71", marginTop: 4 }}>● Database connesso</p>}
+      <footer className="footer">
+        <p className="footer-logo"><span style={{ color: "#c9a84c" }}>2R</span> CAR</p>
+        <p className="footer-sub">Via Collatina, 381 — Roma</p>
+        {dbConnected && <p style={{ fontSize: "0.72rem", color: "#2ecc71", marginTop: "0.3rem" }}>● Database connesso</p>}
       </footer>
 
+      {/* ── Car detail modal ── */}
       {selectedCar && (
         <Modal onClose={() => { setSelectedCar(null); setGalleryOpen(false); }}>
-          <div style={s.modalImg} onClick={() => setGalleryOpen(true)}>
-            <img src={selectedCar.images?.[0] || PLACEHOLDER} alt={selectedCar.model} style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "zoom-in" }} />
+          <div className="modal-img" onClick={() => setGalleryOpen(true)}>
+            <img src={selectedCar.images?.[0] || PLACEHOLDER} alt={selectedCar.model} />
             {selectedCar.images?.length > 1 && (
-              <div style={s.modalPhotoCount}>📷 {selectedCar.images.length} foto — clicca per vedere tutte</div>
+              <div className="modal-photo-count">📷 {selectedCar.images.length} foto — clicca per vedere tutte</div>
             )}
           </div>
-          <div style={s.modalBody}>
-            <div style={s.modalTags}>
+          <div className="modal-body">
+            <div className="modal-tags">
               {(selectedCar.tags || []).map(t => <Tag key={t} label={t} />)}
-              <span style={{ ...s.tag, background: selectedCar.type === "noleggio" ? "#e67e22" : "#27ae60", color: "#fff" }}>
+              <span className="tag" style={{ background: selectedCar.type === "noleggio" ? "#e67e22" : "#27ae60", color: "#fff" }}>
                 {selectedCar.type === "noleggio" ? "Noleggio" : "Vendita"}
               </span>
             </div>
-            <h2 style={s.modalTitle}>{selectedCar.brand} {selectedCar.model}</h2>
-            <p style={s.modalYear}>{selectedCar.year} · {selectedCar.fuel} · {selectedCar.km?.toLocaleString()} km</p>
-            <p style={s.modalPrice}>{selectedCar.type === "noleggio" ? `€ ${selectedCar.price}/giorno` : `€ ${selectedCar.price?.toLocaleString()}`}</p>
-            <a href="tel:+393000008654" style={s.contactCallBtn}>📞 Chiama per info</a>
+            <h2 className="modal-title">{selectedCar.brand} {selectedCar.model}</h2>
+            <p className="modal-year">{selectedCar.year} · {selectedCar.fuel} · {selectedCar.km?.toLocaleString()} km</p>
+            <p className="modal-price">{selectedCar.type === "noleggio" ? `€ ${selectedCar.price}/giorno` : `€ ${selectedCar.price?.toLocaleString()}`}</p>
+            <a href="tel:+393000008654" className="contact-call-btn">📞 Chiama per info</a>
           </div>
         </Modal>
       )}
 
       {selectedCar && galleryOpen && <PhotoGallery images={selectedCar.images} onClose={() => setGalleryOpen(false)} />}
 
+      {/* ── Admin modal ── */}
       {adminOpen && (
         <Modal onClose={() => setAdminOpen(false)}>
           {!adminUser ? (
-            <div style={s.adminLogin}>
-              <div style={s.loginIcon}>🔐</div>
-              <h2 style={s.adminTitle}>Accesso Admin</h2>
-              <p style={s.loginSub}>Accesso protetto</p>
-              <form onSubmit={handleAdminLogin} style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
-                <input type="email" placeholder="Email admin" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} style={s.input} autoComplete="username" />
-                <input type="password" placeholder="Password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} style={s.input} autoComplete="current-password" />
-                {authError && <p style={s.authError}>{authError}</p>}
-                <button type="submit" style={{ ...s.submitBtn, opacity: authLoading ? 0.6 : 1 }} disabled={authLoading}>
+            <div className="admin-login">
+              <div className="login-icon">🔐</div>
+              <h2 className="admin-title" style={{ textAlign: "center" }}>Accesso Admin</h2>
+              <p className="login-sub">Accesso protetto</p>
+              <form onSubmit={handleAdminLogin} style={{ width: "100%", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                <input type="email" placeholder="Email admin" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} className="input" autoComplete="username" />
+                <input type="password" placeholder="Password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="input" autoComplete="current-password" />
+                {authError && <p className="auth-error">{authError}</p>}
+                <button type="submit" className="submit-btn" style={{ opacity: authLoading ? 0.6 : 1 }} disabled={authLoading}>
                   {authLoading ? "Accesso in corso..." : "Entra"}
                 </button>
               </form>
             </div>
           ) : (
-            <div style={s.adminPanel}>
-              <div style={s.adminHeader}>
+            <div className="admin-panel">
+              <div className="admin-header">
                 <div>
-                  <h2 style={{ ...s.adminTitle, margin: 0 }}>Pannello Admin</h2>
-                  <p style={s.adminUserBadge}>✓ {adminUser.email}</p>
+                  <h2 className="admin-title">Pannello Admin</h2>
+                  <p className="admin-user-badge">✓ {adminUser.email}</p>
                 </div>
-                <button style={s.logoutBtn} onClick={handleAdminLogout}>Esci</button>
+                <button className="logout-btn" onClick={handleAdminLogout}>Esci</button>
               </div>
 
-              <h3 style={s.adminSectionTitle}>➕ Nuovo Annuncio</h3>
-              <form onSubmit={handleAddCar} style={s.adminForm}>
-                <div style={s.formRow}>
-                  <input required placeholder="Marca" value={form.brand} onChange={e => setForm({ ...form, brand: e.target.value })} style={s.input} />
-                  <input required placeholder="Modello" value={form.model} onChange={e => setForm({ ...form, model: e.target.value })} style={s.input} />
+              <p className="admin-section-title">➕ Nuovo Annuncio</p>
+              <form onSubmit={handleAddCar} className="admin-form">
+                <div className="form-row">
+                  <input required placeholder="Marca" value={form.brand} onChange={e => setForm({ ...form, brand: e.target.value })} className="input" />
+                  <input required placeholder="Modello" value={form.model} onChange={e => setForm({ ...form, model: e.target.value })} className="input" />
                 </div>
-                <div style={s.formRow}>
-                  <input required type="number" placeholder="Anno" value={form.year} onChange={e => setForm({ ...form, year: e.target.value })} style={s.input} />
-                  <input required type="number" placeholder={form.type === "noleggio" ? "€/giorno" : "Prezzo €"} value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} style={s.input} />
+                <div className="form-row">
+                  <input required type="number" placeholder="Anno" value={form.year} onChange={e => setForm({ ...form, year: e.target.value })} className="input" />
+                  <input required type="number" placeholder={form.type === "noleggio" ? "€/giorno" : "Prezzo €"} value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} className="input" />
                 </div>
-                <div style={s.formRow}>
-                  <input required type="number" placeholder="Km" value={form.km} onChange={e => setForm({ ...form, km: e.target.value })} style={s.input} />
-                  <select value={form.fuel} onChange={e => setForm({ ...form, fuel: e.target.value })} style={s.select}>
+                <div className="form-row">
+                  <input required type="number" placeholder="Km" value={form.km} onChange={e => setForm({ ...form, km: e.target.value })} className="input" />
+                  <select value={form.fuel} onChange={e => setForm({ ...form, fuel: e.target.value })} className="select-field">
                     {["Benzina", "Diesel", "Ibrida", "Elettrica", "GPL"].map(f => <option key={f}>{f}</option>)}
                   </select>
                 </div>
-                <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} style={s.select}>
+                <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className="select-field">
                   <option value="vendita">Vendita</option>
                   <option value="noleggio">Noleggio</option>
                 </select>
-                <div style={s.tagPicker}>
-                  <p style={s.tagPickerLabel}>Tag:</p>
-                  <div style={s.tagPickerGrid}>
+                <div className="tag-picker">
+                  <span className="tag-picker-label">Tag</span>
+                  <div className="tag-picker-grid">
                     {TAGS_AVAILABLE.map(t => (
-                      <button type="button" key={t} onClick={() => toggleFormTag(t)}
-                        style={{ ...s.tagPickerBtn, ...(form.tags.includes(t) ? s.tagPickerBtnActive : {}) }}>{t}</button>
+                      <button type="button" key={t} onClick={() => toggleFormTag(t)} className={`tag-picker-btn${form.tags.includes(t) ? " active" : ""}`}>{t}</button>
                     ))}
                   </div>
                 </div>
-                <p style={{ ...s.tagPickerLabel, margin: "4px 0" }}>Foto:</p>
-                <ImageUploader
-                  previews={formPreviews}
-                  setPreviews={setFormPreviews}
-                  setUploadedFiles={setFormFiles}
-                  uploading={uploading}
-                />
-                <label style={s.checkLabel}>
+                <span className="tag-picker-label" style={{ marginBottom: "0.25rem" }}>Foto</span>
+                <ImageUploader previews={formPreviews} setPreviews={setFormPreviews} setUploadedFiles={setFormFiles} uploading={uploading} />
+                <label className="check-label">
                   <input type="checkbox" checked={form.featured} onChange={e => setForm({ ...form, featured: e.target.checked })} />
-                  &nbsp; Metti in vetrina
+                  Metti in vetrina
                 </label>
-                <button type="submit" style={{ ...s.submitBtn, opacity: (saving || uploading) ? 0.6 : 1 }} disabled={saving || uploading}>
+                <button type="submit" className="submit-btn" style={{ opacity: (saving || uploading) ? 0.6 : 1 }} disabled={saving || uploading}>
                   {saving ? "Salvataggio..." : "Aggiungi Annuncio"}
                 </button>
               </form>
 
-              <h3 style={{ ...s.adminSectionTitle, marginTop: 32 }}>📋 Gestisci Annunci ({cars.length})</h3>
-              <div style={s.adminList}>
+              <p className="admin-section-title" style={{ marginTop: "2rem" }}>📋 Gestisci Annunci ({cars.length})</p>
+              <div className="admin-list">
                 {cars.map(car => (
-                  <div key={car.id} style={s.adminListItem}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <img src={car.images?.[0] || PLACEHOLDER} alt="" style={{ width: 52, height: 38, objectFit: "cover", borderRadius: 4 }} />
-                      <div style={s.adminListInfo}>
-                        <strong>{car.brand} {car.model}</strong>
-                        <span style={s.adminListSub}>{car.year} · {car.type === "noleggio" ? `€${car.price}/g` : `€${car.price?.toLocaleString()}`} · {car.images?.length || 1} foto</span>
+                  <div key={car.id} className="admin-list-item">
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                      <img src={car.images?.[0] || PLACEHOLDER} alt="" style={{ width: "3.25rem", height: "2.4rem", objectFit: "cover", borderRadius: "0.3rem", flexShrink: 0 }} />
+                      <div className="admin-list-info">
+                        <strong style={{ fontSize: "0.88rem" }}>{car.brand} {car.model}</strong>
+                        <span className="admin-list-sub">{car.year} · {car.type === "noleggio" ? `€${car.price}/g` : `€${car.price?.toLocaleString()}`} · {car.images?.length || 1} foto</span>
                       </div>
                     </div>
-                    <div style={s.adminListActions}>
-                      <button style={{ ...s.adminActionBtn, background: car.featured ? "#f39c12" : "#ecf0f1", color: car.featured ? "#fff" : "#333" }}
+                    <div className="admin-list-actions">
+                      <button className="admin-action-btn"
+                        style={{ background: car.featured ? "#f39c12" : "#ecf0f1", color: car.featured ? "#fff" : "#333" }}
                         onClick={() => toggleFeatured(car.id)} title="Vetrina">⭐</button>
-                      <button style={{ ...s.adminActionBtn, background: "#e74c3c", color: "#fff" }} onClick={() => deleteCar(car.id)}>✕</button>
+                      <button className="admin-action-btn" style={{ background: "#e74c3c", color: "#fff" }} onClick={() => deleteCar(car.id)}>✕</button>
                     </div>
                   </div>
                 ))}
@@ -509,134 +996,27 @@ export default function App() {
   );
 }
 
-function Tag({ label }) { return <span style={styles.tag}>{label}</span>; }
-function EmptyState({ text }) { return <p style={{ textAlign: "center", color: "#aaa", padding: "60px 0", fontSize: 16 }}>{text}</p>; }
+function Tag({ label }) { return <span className="tag">{label}</span>; }
+function EmptyState({ text }) { return <p style={{ textAlign: "center", color: "#aaa", padding: "3.75rem 0", fontSize: "1rem" }}>{text}</p>; }
+
 function TagFilter({ tags, active, onSelect }) {
   return (
-    <div style={styles.tagFilter}>
-      <button style={{ ...styles.tagFilterBtn, ...(active === null ? styles.tagFilterBtnActive : {}) }} onClick={() => onSelect(null)}>Tutti</button>
-      {tags.map(t => <button key={t} style={{ ...styles.tagFilterBtn, ...(active === t ? styles.tagFilterBtnActive : {}) }} onClick={() => onSelect(t)}>{t}</button>)}
+    <div className="tag-filter">
+      <button className={`tag-filter-btn${active === null ? " active" : ""}`} onClick={() => onSelect(null)}>Tutti</button>
+      {tags.map(t => (
+        <button key={t} className={`tag-filter-btn${active === t ? " active" : ""}`} onClick={() => onSelect(t)}>{t}</button>
+      ))}
     </div>
   );
 }
+
 function Modal({ children, onClose }) {
   return (
-    <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.modal} onClick={e => e.stopPropagation()}>
-        <button style={styles.modalClose} onClick={onClose}>✕</button>
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>✕</button>
         {children}
       </div>
     </div>
   );
 }
-
-const styles = {
-  root: { fontFamily: "'Georgia', serif", background: "#f5f4f0", minHeight: "100vh", color: "#1a1a1a" },
-  banner: { background: "#e67e22", color: "#fff", textAlign: "center", padding: "10px 16px", fontSize: 14 },
-  nav: { background: "#1a1a2e", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 20px rgba(0,0,0,0.3)" },
-  navInner: { maxWidth: 1100, margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 },
-  logo: { cursor: "pointer", letterSpacing: 2, fontSize: 22 },
-  logoAccent: { color: "#c9a84c", fontWeight: 900 },
-  logoText: { color: "#fff", fontWeight: 300 },
-  navLinks: { display: "flex", gap: 8, alignItems: "center" },
-  navBtn: { background: "none", border: "none", color: "#ccc", cursor: "pointer", fontSize: 14, padding: "8px 14px", borderRadius: 6, letterSpacing: 0.5 },
-  navBtnActive: { color: "#c9a84c", background: "rgba(201,168,76,0.1)" },
-  adminBtn: { background: "rgba(201,168,76,0.2)", border: "1px solid #c9a84c", color: "#c9a84c", cursor: "pointer", fontSize: 13, padding: "6px 14px", borderRadius: 6 },
-  loadingScreen: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 300 },
-  spinner: { width: 40, height: 40, border: "3px solid #eee", borderTop: "3px solid #c9a84c", borderRadius: "50%" },
-  hero: { position: "relative", height: 500, background: "url(https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1400&q=80) center/cover", display: "flex", alignItems: "center" },
-  heroOverlay: { position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(26,26,46,0.85) 0%, rgba(26,26,46,0.4) 100%)" },
-  heroContent: { position: "relative", maxWidth: 1100, margin: "0 auto", padding: "0 24px", width: "100%" },
-  heroEyebrow: { color: "#c9a84c", letterSpacing: 4, fontSize: 13, textTransform: "uppercase", marginBottom: 12 },
-  heroTitle: { color: "#fff", fontSize: 48, fontWeight: 700, lineHeight: 1.2, margin: "0 0 32px", textShadow: "0 2px 20px rgba(0,0,0,0.5)" },
-  heroBtns: { display: "flex", gap: 16 },
-  heroBtn: { background: "#c9a84c", border: "none", color: "#1a1a2e", padding: "14px 32px", fontFamily: "inherit", fontSize: 15, fontWeight: 700, cursor: "pointer", borderRadius: 4, letterSpacing: 1 },
-  heroBtnOutline: { background: "transparent", border: "2px solid #fff", color: "#fff" },
-  section: { maxWidth: 1100, margin: "0 auto", padding: "60px 24px" },
-  sectionHeader: { textAlign: "center", marginBottom: 40 },
-  sectionTitle: { fontSize: 32, fontWeight: 700, margin: "0 0 8px", color: "#1a1a2e" },
-  sectionSub: { color: "#888", fontSize: 16, margin: 0 },
-  grid3: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 },
-  card: { background: "#fff", borderRadius: 12, overflow: "hidden", cursor: "pointer", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", transition: "transform .2s, box-shadow .2s" },
-  cardImgWrap: { position: "relative", height: 200, overflow: "hidden" },
-  cardImg: { width: "100%", height: "100%", objectFit: "cover", transition: "opacity .15s" },
-  cardBadge: { position: "absolute", top: 12, right: 12, color: "#fff", fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 20, letterSpacing: 0.5, textTransform: "uppercase" },
-  photoDots: { position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 4 },
-  photoDot: { width: 6, height: 6, borderRadius: "50%", transition: "background .2s" },
-  cardBody: { padding: 20 },
-  cardTags: { display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" },
-  cardTitle: { fontSize: 18, fontWeight: 700, margin: "0 0 6px", color: "#1a1a2e" },
-  cardSub: { color: "#888", fontSize: 13, margin: "0 0 12px" },
-  cardPrice: { fontSize: 22, fontWeight: 700, color: "#c9a84c", margin: 0 },
-  cardPriceSub: { fontSize: 13, color: "#888", fontWeight: 400 },
-  tag: { background: "#f0ede6", color: "#555", fontSize: 11, padding: "3px 9px", borderRadius: 20, fontFamily: "sans-serif" },
-  tagFilter: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 32 },
-  tagFilterBtn: { background: "#fff", border: "1px solid #ddd", color: "#555", padding: "6px 16px", borderRadius: 20, cursor: "pointer", fontSize: 13, fontFamily: "inherit" },
-  tagFilterBtnActive: { background: "#1a1a2e", border: "1px solid #1a1a2e", color: "#c9a84c" },
-  ctaStrip: { background: "#1a1a2e", padding: "48px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap" },
-  ctaLeft: { maxWidth: 600, paddingLeft: "calc(max(24px, (100% - 1100px)/2))" },
-  ctaTitle: { color: "#fff", fontSize: 22, fontWeight: 700, margin: "0 0 8px" },
-  ctaSub: { color: "#aaa", margin: 0 },
-  ctaButton: { background: "#c9a84c", border: "none", color: "#1a1a2e", padding: "14px 32px", fontFamily: "inherit", fontSize: 15, fontWeight: 700, cursor: "pointer", borderRadius: 4, marginRight: "calc(max(24px, (100% - 1100px)/2))", whiteSpace: "nowrap" },
-  contactCard: { background: "#fff", borderRadius: 12, padding: 40, maxWidth: 500, margin: "0 auto", boxShadow: "0 2px 20px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", gap: 20 },
-  contactItem: { display: "flex", alignItems: "center", gap: 16, fontSize: 17 },
-  contactIcon: { fontSize: 24, width: 32 },
-  footer: { background: "#111", color: "#666", textAlign: "center", padding: "32px 24px" },
-  footerLogo: { fontSize: 20, letterSpacing: 2, marginBottom: 8 },
-  footerSub: { fontSize: 12, margin: 0 },
-  overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 },
-  modal: { background: "#fff", borderRadius: 16, width: "100%", maxWidth: 580, maxHeight: "90vh", overflowY: "auto", position: "relative" },
-  modalClose: { position: "absolute", top: 16, right: 16, background: "rgba(0,0,0,0.1)", border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", zIndex: 10, fontSize: 14 },
-  modalImg: { height: 240, overflow: "hidden", borderRadius: "16px 16px 0 0", position: "relative" },
-  modalPhotoCount: { position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 12px", borderRadius: 20, whiteSpace: "nowrap" },
-  modalBody: { padding: 28 },
-  modalTags: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 },
-  modalTitle: { fontSize: 26, fontWeight: 700, margin: "0 0 6px", color: "#1a1a2e" },
-  modalYear: { color: "#888", fontSize: 14, margin: "0 0 16px" },
-  modalPrice: { fontSize: 30, fontWeight: 700, color: "#c9a84c", margin: "0 0 24px" },
-  contactCallBtn: { display: "block", background: "#1a1a2e", color: "#c9a84c", textAlign: "center", padding: "14px", borderRadius: 8, fontWeight: 700, textDecoration: "none", fontSize: 16, letterSpacing: 0.5 },
-  galleryOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.93)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center" },
-  galleryBox: { position: "relative", maxWidth: 900, width: "100%", padding: "40px 20px 20px" },
-  galleryClose: { position: "absolute", top: 4, right: 10, background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", borderRadius: "50%", width: 36, height: 36, cursor: "pointer", fontSize: 18, zIndex: 10 },
-  galleryMain: { width: "100%", maxHeight: "65vh", objectFit: "contain", borderRadius: 8, display: "block", margin: "0 auto" },
-  galleryNav: { position: "absolute", top: "45%", background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", borderRadius: "50%", width: 44, height: 44, fontSize: 28, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
-  galleryThumbs: { display: "flex", gap: 8, justifyContent: "center", marginTop: 14, flexWrap: "wrap" },
-  galleryThumb: { width: 64, height: 48, objectFit: "cover", borderRadius: 4, cursor: "pointer", opacity: 0.5, transition: "opacity .2s" },
-  galleryThumbActive: { opacity: 1, outline: "2px solid #c9a84c" },
-  galleryCounter: { textAlign: "center", color: "#888", fontSize: 13, marginTop: 8 },
-  adminLogin: { padding: 32, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 },
-  loginIcon: { fontSize: 40 },
-  loginSub: { color: "#888", fontSize: 13, margin: 0, textAlign: "center" },
-  authError: { background: "#fdecea", color: "#e74c3c", borderRadius: 6, padding: "8px 12px", fontSize: 13, margin: 0, textAlign: "center" },
-  adminHeader: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24 },
-  adminUserBadge: { color: "#27ae60", fontSize: 12, margin: "4px 0 0", fontFamily: "monospace" },
-  logoutBtn: { background: "#f8f8f8", border: "1px solid #ddd", color: "#666", padding: "6px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontFamily: "inherit" },
-  adminPanel: { padding: 28 },
-  adminTitle: { fontSize: 22, fontWeight: 700, margin: "0 0 4px", color: "#1a1a2e" },
-  adminSectionTitle: { fontSize: 13, fontWeight: 700, color: "#888", margin: "0 0 16px", textTransform: "uppercase", letterSpacing: 1 },
-  adminForm: { display: "flex", flexDirection: "column", gap: 12 },
-  formRow: { display: "flex", gap: 12 },
-  input: { flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd", fontFamily: "inherit", fontSize: 14, outline: "none" },
-  select: { flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd", fontFamily: "inherit", fontSize: 14, background: "#fff" },
-  tagPicker: { background: "#f8f8f8", borderRadius: 8, padding: 14 },
-  tagPickerLabel: { fontSize: 12, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: 1, margin: "0 0 10px" },
-  tagPickerGrid: { display: "flex", gap: 8, flexWrap: "wrap" },
-  tagPickerBtn: { background: "#fff", border: "1px solid #ddd", padding: "5px 12px", borderRadius: 20, cursor: "pointer", fontSize: 12, fontFamily: "inherit" },
-  tagPickerBtnActive: { background: "#1a1a2e", border: "1px solid #1a1a2e", color: "#c9a84c" },
-  dropzone: { border: "2px dashed #ddd", borderRadius: 10, padding: "24px 16px", textAlign: "center", cursor: "pointer", background: "#fafafa", transition: "all .2s" },
-  dropzoneActive: { border: "2px dashed #c9a84c", background: "#fffbf0" },
-  dropzoneText: { color: "#888", fontSize: 14, margin: 0, lineHeight: 2 },
-  previewGrid: { display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 },
-  previewItem: { position: "relative", width: 80, height: 60 },
-  previewImg: { width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 },
-  previewRemove: { position: "absolute", top: -6, right: -6, background: "#e74c3c", border: "none", color: "#fff", borderRadius: "50%", width: 18, height: 18, fontSize: 10, cursor: "pointer" },
-  previewMain: { position: "absolute", bottom: 2, left: 2, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 9, padding: "1px 4px", borderRadius: 3 },
-  checkLabel: { fontSize: 14, display: "flex", alignItems: "center", cursor: "pointer" },
-  submitBtn: { background: "#1a1a2e", color: "#c9a84c", border: "none", padding: "12px", borderRadius: 8, fontFamily: "inherit", fontSize: 15, fontWeight: 700, cursor: "pointer", letterSpacing: 0.5 },
-  adminList: { display: "flex", flexDirection: "column", gap: 10, maxHeight: 280, overflowY: "auto" },
-  adminListItem: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "#f8f8f8", borderRadius: 8 },
-  adminListInfo: { display: "flex", flexDirection: "column", gap: 2 },
-  adminListSub: { fontSize: 12, color: "#888" },
-  adminListActions: { display: "flex", gap: 8 },
-  adminActionBtn: { border: "none", borderRadius: 6, width: 32, height: 32, cursor: "pointer", fontSize: 14 },
-};
