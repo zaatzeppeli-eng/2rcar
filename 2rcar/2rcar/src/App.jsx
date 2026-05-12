@@ -281,8 +281,10 @@ const GLOBAL_CSS = `
 
   /* ── Footer ── */
   .footer {
-    position: sticky;
-    bottom:0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
     background: #111;
     color: #555;
     text-align: center;
