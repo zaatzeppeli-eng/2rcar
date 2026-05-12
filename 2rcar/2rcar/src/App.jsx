@@ -569,7 +569,7 @@ function IntroScreen({ onDone }) {
         </div>
 
         <div className="intro-sep" />
-        <span className="intro-eyebrow">Dal 2009</span>
+        <span className="intro-eyebrow">La tua prossima auto ti aspetta qui</span>
       </div>
     </div>
   );
