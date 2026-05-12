@@ -1913,7 +1913,7 @@ export default function App() {
       {/* ── WhatsApp FAB (solo mobile via CSS display:none/flex) ── */}
       <a
         className="whatsapp-fab"
-        href="https://wa.me/393000008654?text=Ciao%2C%20vi%20contatto%20dal%20sito%20per%20informazioni%20sulle%20auto"
+        href="https://wa.me/393711299392?text=Ciao%2C%20vi%20contatto%20dal%20sito%20per%20informazioni%20sulle%20auto"
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Contattaci su WhatsApp"
