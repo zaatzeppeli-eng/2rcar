@@ -146,7 +146,7 @@ body {
 .nav-bar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 200;
   height: var(--nav-h);
-  background-color:#000033;
+  background-color:#00001a;
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-bottom: 1px solid transparent;
