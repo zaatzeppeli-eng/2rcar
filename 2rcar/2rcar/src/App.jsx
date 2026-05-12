@@ -564,7 +564,7 @@ function IntroScreen({ onDone }) {
           <span className="intro-wm-sub">Vendita &amp; Noleggio · Roma</span>
         </div>
         <div className="intro-sep" />
-        <span className="intro-eyebrow">Dal 2009</span>
+        <span className="intro-eyebrow">La tua prossima auto ti aspetta da noi</span>
       </div>
     </div>
   );
