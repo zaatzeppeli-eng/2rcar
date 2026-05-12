@@ -10,7 +10,16 @@ const TAGS_AVAILABLE = ["automatico", "navigatore", "pelle", "tetto apribile", "
 const NAV_ITEMS = ["Home", "Vendita", "Noleggio", "Chi Siamo", "Contatti"];
 const PLACEHOLDER = "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&q=80";
 
-// Auto-hide dopo 7 giorni per annunci "venduta"
+const EMPTY_FILTERS = {
+  tag: null,
+  fuel: "",
+  yearFrom: "",
+  yearTo: "",
+  kmMax: "",
+  priceMax: "",
+  cambio: "",
+};
+
 function isExpired(car) {
   if (car.status !== "venduta") return false;
   if (!car.sold_at) return false;
@@ -76,7 +85,6 @@ const GLOBAL_CSS = `
   ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
   * { scrollbar-width: thin; scrollbar-color: var(--gold) transparent; }
 
-  /* ── Layout wrapper ── */
   .page-wrapper {
     display: flex;
     flex-direction: column;
@@ -227,21 +235,61 @@ const GLOBAL_CSS = `
     letter-spacing: 0.03em;
   }
 
-  .tag-filter { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem; }
-  .tag-filter-btn {
-    background: var(--white);
-    border: 1px solid var(--border);
-    color: #666;
-    padding: 0.4em 1.1em;
-    border-radius: 999px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 500;
-    transition: all 0.18s;
+  /* ── Advanced Filters ── */
+  .filters-wrapper { margin-bottom: 1.75rem; }
+  .filters-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 0.6rem; padding: 0.7rem 1rem; cursor: pointer;
+    user-select: none; transition: border-color 0.18s;
   }
-  .tag-filter-btn:hover { border-color: var(--gold); color: var(--navy); }
-  .tag-filter-btn.active { background: var(--navy); border-color: var(--navy); color: var(--gold); }
+  .filters-bar:hover { border-color: var(--gold); }
+  .filters-bar-left { display: flex; align-items: center; gap: 0.6rem; font-size: 0.88rem; font-weight: 600; color: var(--navy); }
+  .filters-active-badge {
+    background: var(--navy); color: var(--gold);
+    font-size: 0.7rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 999px;
+  }
+  .filters-reset-btn {
+    font-size: 0.75rem; color: #999; background: none;
+    border: 1px solid var(--border); border-radius: 0.3rem;
+    padding: 2px 8px; cursor: pointer; transition: background 0.15s;
+  }
+  .filters-reset-btn:hover { background: #f0ede6; }
+  .filters-arrow { font-size: 0.8rem; color: #aaa; display: inline-block; transition: transform 0.2s; }
+  .filters-panel {
+    background: var(--white); border: 1px solid var(--border);
+    border-top: none; border-radius: 0 0 0.6rem 0.6rem;
+    padding: 1.1rem; display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.85rem 1rem;
+  }
+  .filter-group label {
+    display: block; font-size: 0.68rem; font-weight: 700;
+    color: #aaa; text-transform: uppercase;
+    letter-spacing: 0.09em; margin-bottom: 0.35rem;
+  }
+  .filter-select {
+    width: 100%; padding: 0.5em 0.7em; border-radius: 0.4rem;
+    border: 1px solid var(--border); background: var(--cream);
+    font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+    color: var(--text); outline: none; transition: border-color 0.18s;
+    appearance: auto;
+  }
+  .filter-select:focus { border-color: var(--gold); }
+  .filter-divider { grid-column: 1 / -1; border: none; border-top: 1px solid var(--border); margin: 0.2rem 0; }
+  .filter-tags-area { grid-column: 1 / -1; }
+  .filter-tags-label { font-size: 0.68rem; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 0.5rem; display: block; }
+  .filter-tags-row { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .filter-tag-btn {
+    background: var(--white); border: 1px solid var(--border);
+    color: #666; padding: 0.3em 0.85em; border-radius: 999px;
+    cursor: pointer; font-size: 0.78rem; font-family: 'DM Sans', sans-serif;
+    font-weight: 500; transition: all 0.15s;
+  }
+  .filter-tag-btn:hover { border-color: var(--gold); color: var(--navy); }
+  .filter-tag-btn.active { background: var(--navy); border-color: var(--navy); color: var(--gold); }
+  .filters-summary { font-size: 0.8rem; color: var(--muted); margin-top: 0.6rem; min-height: 1.2rem; }
 
   .cta-strip {
     background: var(--navy);
@@ -325,7 +373,6 @@ const GLOBAL_CSS = `
   }
   .modal-close:hover { background: rgba(0,0,0,0.15); }
 
-  /* ── Modal gallery carousel ── */
   .modal-gallery {
     position: relative;
     height: 15rem;
@@ -385,7 +432,6 @@ const GLOBAL_CSS = `
   }
   .contact-call-btn:hover { background: #2a2a4e; }
 
-  /* Venduta banner su card */
   .sold-overlay {
     position: absolute; inset: 0;
     background: rgba(0,0,0,0.45);
@@ -522,7 +568,6 @@ const GLOBAL_CSS = `
   .ornament-line { flex: 1; max-width: 4rem; height: 1px; background: var(--gold); opacity: 0.4; }
   .ornament-dot { width: 0.4rem; height: 0.4rem; background: var(--gold); border-radius: 50%; }
 
-  /* ── Chi Siamo ── */
   .chisiamo-hero {
     background: var(--navy);
     padding: clamp(3rem, 7vw, 5rem) 1.5rem;
@@ -631,6 +676,7 @@ const GLOBAL_CSS = `
     .cta-inner { flex-direction: column; align-items: flex-start; }
     .stat-block { border-right: none; border-bottom: 1px solid rgba(26,26,46,0.15); }
     .stat-block:last-child { border-bottom: none; }
+    .filters-panel { grid-template-columns: 1fr 1fr; }
   }
 `;
 
@@ -662,6 +708,155 @@ function useNavHide() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   return hidden;
+}
+
+// ── Advanced Filters Component ──
+function AdvancedFilters({ filters, onChange, allTags, type, resultCount }) {
+  const [open, setOpen] = useState(false);
+
+  const activeCount = Object.entries(filters).filter(([k, v]) =>
+    k === "tag" ? v !== null : v !== ""
+  ).length;
+
+  function set(key, val) {
+    onChange({ ...filters, [key]: key === "tag" ? (val || null) : (val || "") });
+  }
+
+  function resetAll(e) {
+    e.stopPropagation();
+    onChange({ ...EMPTY_FILTERS });
+  }
+
+  const PRICE_OPTIONS_VENDITA = [
+    ["5000", "€ 5.000"], ["10000", "€ 10.000"], ["15000", "€ 15.000"],
+    ["20000", "€ 20.000"], ["30000", "€ 30.000"], ["50000", "€ 50.000"],
+  ];
+  const PRICE_OPTIONS_NOLEGGIO = [
+    ["30", "€ 30/g"], ["50", "€ 50/g"], ["80", "€ 80/g"],
+    ["120", "€ 120/g"], ["200", "€ 200/g"],
+  ];
+  const priceOptions = type === "noleggio" ? PRICE_OPTIONS_NOLEGGIO : PRICE_OPTIONS_VENDITA;
+
+  const summaryParts = [];
+  if (filters.fuel) summaryParts.push(filters.fuel);
+  if (filters.yearFrom || filters.yearTo) summaryParts.push(`${filters.yearFrom || "–"} → ${filters.yearTo || "–"}`);
+  if (filters.kmMax) summaryParts.push(`max ${parseInt(filters.kmMax).toLocaleString("it")} km`);
+  if (filters.priceMax) summaryParts.push(type === "noleggio" ? `max €${filters.priceMax}/g` : `max €${parseInt(filters.priceMax).toLocaleString("it")}`);
+  if (filters.cambio) summaryParts.push(filters.cambio);
+  if (filters.tag) summaryParts.push(filters.tag);
+
+  return (
+    <div className="filters-wrapper">
+      <div className={`filters-bar${open ? " open" : ""}`} onClick={() => setOpen(o => !o)}
+        style={{ borderRadius: open ? "0.6rem 0.6rem 0 0" : "0.6rem" }}>
+        <div className="filters-bar-left">
+          <span>🎛️ Filtri avanzati</span>
+          {activeCount > 0 && <span className="filters-active-badge">{activeCount}</span>}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+          {activeCount > 0 && (
+            <button className="filters-reset-btn" onClick={resetAll}>Azzera tutto</button>
+          )}
+          <span className="filters-arrow" style={{ transform: open ? "rotate(180deg)" : "rotate(0)" }}>▾</span>
+        </div>
+      </div>
+
+      {open && (
+        <div className="filters-panel">
+          {/* Carburante */}
+          <div className="filter-group">
+            <label>Carburante</label>
+            <select className="filter-select" value={filters.fuel} onChange={e => set("fuel", e.target.value)}>
+              <option value="">Tutti</option>
+              {["Benzina", "Diesel", "Ibrida", "Elettrica", "GPL"].map(f => (
+                <option key={f} value={f}>{f}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Anno da */}
+          <div className="filter-group">
+            <label>Anno da</label>
+            <select className="filter-select" value={filters.yearFrom} onChange={e => set("yearFrom", e.target.value)}>
+              <option value="">Qualsiasi</option>
+              {[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024].map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Anno a */}
+          <div className="filter-group">
+            <label>Anno a</label>
+            <select className="filter-select" value={filters.yearTo} onChange={e => set("yearTo", e.target.value)}>
+              <option value="">Qualsiasi</option>
+              {[2016,2017,2018,2019,2020,2021,2022,2023,2024,2025].map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Km massimi */}
+          <div className="filter-group">
+            <label>Km massimi</label>
+            <select className="filter-select" value={filters.kmMax} onChange={e => set("kmMax", e.target.value)}>
+              <option value="">Qualsiasi</option>
+              <option value="20000">20.000 km</option>
+              <option value="30000">30.000 km</option>
+              <option value="50000">50.000 km</option>
+              <option value="80000">80.000 km</option>
+              <option value="120000">120.000 km</option>
+              <option value="150000">150.000 km</option>
+            </select>
+          </div>
+
+          {/* Prezzo massimo */}
+          <div className="filter-group">
+            <label>{type === "noleggio" ? "Prezzo max/giorno" : "Prezzo massimo"}</label>
+            <select className="filter-select" value={filters.priceMax} onChange={e => set("priceMax", e.target.value)}>
+              <option value="">Qualsiasi</option>
+              {priceOptions.map(([v, l]) => (
+                <option key={v} value={v}>{l}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Cambio */}
+          <div className="filter-group">
+            <label>Cambio</label>
+            <select className="filter-select" value={filters.cambio} onChange={e => set("cambio", e.target.value)}>
+              <option value="">Tutti</option>
+              <option value="automatico">Automatico</option>
+              <option value="cambio manuale">Manuale</option>
+            </select>
+          </div>
+
+          <hr className="filter-divider" />
+
+          {/* Tag caratteristiche */}
+          <div className="filter-tags-area">
+            <span className="filter-tags-label">Caratteristiche</span>
+            <div className="filter-tags-row">
+              {allTags.map(t => (
+                <button key={t} type="button"
+                  className={`filter-tag-btn${filters.tag === t ? " active" : ""}`}
+                  onClick={() => set("tag", filters.tag === t ? null : t)}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="filters-summary">
+        {activeCount > 0
+          ? <>🔍 {resultCount} risultat{resultCount === 1 ? "o" : "i"} · {summaryParts.join(" · ")}</>
+          : <>{resultCount} annunci disponibili</>
+        }
+      </div>
+    </div>
+  );
 }
 
 function ImageUploader({ previews, setPreviews, setUploadedFiles, uploading }) {
@@ -710,7 +905,6 @@ function ImageUploader({ previews, setPreviews, setUploadedFiles, uploading }) {
   );
 }
 
-// ── Modal gallery carousel (scroll foto inline) ──
 function ModalGallery({ images, onZoom }) {
   const imgs = images?.length ? images : [PLACEHOLDER];
   const [idx, setIdx] = useState(0);
@@ -827,7 +1021,6 @@ function PhotoGallery({ images, startIdx, onClose }) {
   );
 }
 
-// ── Pagina Chi Siamo (aggiornata) ──
 function ChiSiamo({ onContact }) {
   return (
     <>
@@ -958,7 +1151,7 @@ export default function App() {
   const [selectedCar, setSelectedCar] = useState(null);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [galleryStartIdx, setGalleryStartIdx] = useState(0);
-  const [filterTag, setFilterTag] = useState(null);
+  const [filters, setFilters] = useState({ ...EMPTY_FILTERS });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [formPreviews, setFormPreviews] = useState([]);
@@ -1014,12 +1207,11 @@ export default function App() {
     if (dbConnected) for (const u of updates) await supabase.from("cars").update({ featured: u.featured }).eq("id", u.id);
   }
 
-  // Toggle stato venduta
   async function toggleSold(id) {
     if (!adminUser) return;
     const car = cars.find(c => c.id === id);
     const isSold = car.status === "venduta";
-    const newStatus = isSold ? car.type : "venduta"; // se era venduta, torna al type originale
+    const newStatus = isSold ? car.type : "venduta";
     const soldAt = isSold ? null : new Date().toISOString();
     setCars(prev => prev.map(c => c.id === id ? { ...c, status: newStatus, sold_at: soldAt } : c));
     if (dbConnected) await supabase.from("cars").update({ status: newStatus, sold_at: soldAt }).eq("id", id);
@@ -1062,15 +1254,32 @@ export default function App() {
     setForm(f => ({ ...f, tags: f.tags.includes(tag) ? f.tags.filter(t => t !== tag) : [...f.tags, tag] }));
   }
 
-  // Filtra auto: esclude quelle "venduta" scadute (>7 giorni), ma le mostra comunque in admin
-  const visibleCars = cars.filter(c => !isExpired(c));
+  // ── Logica di filtraggio avanzata ──
+  function applyFilters(list) {
+    return list.filter(car => {
+      if (filters.tag && !car.tags?.includes(filters.tag)) return false;
+      if (filters.fuel && car.fuel !== filters.fuel) return false;
+      if (filters.yearFrom && car.year < parseInt(filters.yearFrom)) return false;
+      if (filters.yearTo && car.year > parseInt(filters.yearTo)) return false;
+      if (filters.kmMax && car.km > parseInt(filters.kmMax)) return false;
+      if (filters.priceMax && car.price > parseInt(filters.priceMax)) return false;
+      if (filters.cambio && !car.tags?.includes(filters.cambio)) return false;
+      return true;
+    });
+  }
 
+  const visibleCars = cars.filter(c => !isExpired(c));
   const featuredCars = visibleCars.filter(c => c.featured).slice(0, 3);
   const saleCars = visibleCars.filter(c => c.type === "vendita");
   const rentalCars = visibleCars.filter(c => c.type === "noleggio");
-  const filteredSale = filterTag ? saleCars.filter(c => c.tags?.includes(filterTag)) : saleCars;
-  const filteredRental = filterTag ? rentalCars.filter(c => c.tags?.includes(filterTag)) : rentalCars;
+  const filteredSale = applyFilters(saleCars);
+  const filteredRental = applyFilters(rentalCars);
   const allTags = [...new Set(visibleCars.flatMap(c => c.tags || []))];
+
+  function navigateTo(newPage) {
+    setPage(newPage);
+    setFilters({ ...EMPTY_FILTERS });
+  }
 
   function openCar(car) { setSelectedCar(car); setGalleryOpen(false); setGalleryStartIdx(0); }
   function openZoom(idx) { setGalleryStartIdx(idx); setGalleryOpen(true); }
@@ -1084,7 +1293,7 @@ export default function App() {
       <nav className={`nav-bar${navHidden ? " hidden" : ""}`}>
         <div className="nav-inner">
           <div style={{ cursor: "pointer", letterSpacing: "0.12em", fontSize: "1.25rem", display: "flex", alignItems: "center", gap: "0.15em" }}
-            onClick={() => { setPage("Home"); setFilterTag(null); }}>
+            onClick={() => navigateTo("Home")}>
             <span style={{ color: "#c9a84c", fontFamily: "'Playfair Display', serif", fontWeight: 900 }}>2R</span>
             <span style={{ color: "#fff", fontFamily: "'DM Sans', sans-serif", fontWeight: 300, letterSpacing: "0.18em", fontSize: "0.85em" }}>CAR</span>
           </div>
@@ -1101,7 +1310,7 @@ export default function App() {
                   fontWeight: page === item ? 600 : 400,
                   transition: "color 0.15s, background 0.15s",
                 }}
-                onClick={() => { setPage(item); setFilterTag(null); }}>{item}</button>
+                onClick={() => navigateTo(item)}>{item}</button>
             ))}
             <button
               style={{
@@ -1138,8 +1347,8 @@ export default function App() {
                     <p className="hero-eyebrow">Vendita &amp; Noleggio Auto · Roma</p>
                     <h1 className="hero-title">La tua prossima auto<br />ti aspetta qui.</h1>
                     <div className="hero-btns">
-                      <button className="hero-btn" onClick={() => setPage("Vendita")}>Acquista</button>
-                      <button className="hero-btn hero-btn-outline" onClick={() => setPage("Noleggio")}>Noleggia</button>
+                      <button className="hero-btn" onClick={() => navigateTo("Vendita")}>Acquista</button>
+                      <button className="hero-btn hero-btn-outline" onClick={() => navigateTo("Noleggio")}>Noleggia</button>
                     </div>
                   </div>
                 </div>
@@ -1162,7 +1371,7 @@ export default function App() {
                       <h3 className="cta-title">Hai bisogno di un'auto per qualche giorno?</h3>
                       <p className="cta-sub">Noleggio flessibile, disponibile subito.</p>
                     </div>
-                    <button className="cta-button" onClick={() => setPage("Noleggio")}>Vedi il noleggio →</button>
+                    <button className="cta-button" onClick={() => navigateTo("Noleggio")}>Vedi il noleggio →</button>
                   </div>
                 </div>
               </>
@@ -1173,11 +1382,16 @@ export default function App() {
                 <div className="section-header">
                   <h2 className="section-title">Auto in Vendita</h2>
                   <div className="ornament"><div className="ornament-line" /><div className="ornament-dot" /><div className="ornament-line" /></div>
-                  <p className="section-sub">{filteredSale.length} annunci disponibili</p>
                 </div>
-                <TagFilter tags={allTags} active={filterTag} onSelect={setFilterTag} />
+                <AdvancedFilters
+                  filters={filters}
+                  onChange={setFilters}
+                  allTags={allTags}
+                  type="vendita"
+                  resultCount={filteredSale.length}
+                />
                 {filteredSale.length === 0
-                  ? <EmptyState text="Nessuna auto in vendita al momento." />
+                  ? <EmptyState text="Nessuna auto corrisponde ai filtri selezionati." />
                   : <div className="grid-3">{filteredSale.map(car => <CarCard key={car.id} car={car} onClick={() => openCar(car)} />)}</div>}
               </section>
             )}
@@ -1189,14 +1403,20 @@ export default function App() {
                   <div className="ornament"><div className="ornament-line" /><div className="ornament-dot" /><div className="ornament-line" /></div>
                   <p className="section-sub">Prezzi al giorno — disponibilità immediata</p>
                 </div>
-                <TagFilter tags={allTags} active={filterTag} onSelect={setFilterTag} />
+                <AdvancedFilters
+                  filters={filters}
+                  onChange={setFilters}
+                  allTags={allTags}
+                  type="noleggio"
+                  resultCount={filteredRental.length}
+                />
                 {filteredRental.length === 0
-                  ? <EmptyState text="Nessuna auto a noleggio al momento." />
+                  ? <EmptyState text="Nessuna auto corrisponde ai filtri selezionati." />
                   : <div className="grid-3">{filteredRental.map(car => <CarCard key={car.id} car={car} onClick={() => openCar(car)} />)}</div>}
               </section>
             )}
 
-            {page === "Chi Siamo" && <ChiSiamo onContact={() => setPage("Contatti")} />}
+            {page === "Chi Siamo" && <ChiSiamo onContact={() => navigateTo("Contatti")} />}
 
             {page === "Contatti" && (
               <section className="section">
@@ -1225,7 +1445,6 @@ export default function App() {
         {dbConnected && <p style={{ fontSize: "0.72rem", color: "#2ecc71", marginTop: "0.3rem" }}>● Database connesso</p>}
       </footer>
 
-      {/* ── Modal annuncio ── */}
       {selectedCar && (
         <Modal onClose={() => { setSelectedCar(null); setGalleryOpen(false); }}>
           <ModalGallery images={selectedCar.images} onZoom={openZoom} />
@@ -1261,7 +1480,6 @@ export default function App() {
         <PhotoGallery images={selectedCar.images} startIdx={galleryStartIdx} onClose={() => setGalleryOpen(false)} />
       )}
 
-      {/* ── Admin modal ── */}
       {adminOpen && (
         <Modal onClose={() => setAdminOpen(false)}>
           {!adminUser ? (
@@ -1374,17 +1592,6 @@ export default function App() {
 
 function Tag({ label }) { return <span className="tag">{label}</span>; }
 function EmptyState({ text }) { return <p style={{ textAlign: "center", color: "#aaa", padding: "3.75rem 0", fontSize: "1rem" }}>{text}</p>; }
-
-function TagFilter({ tags, active, onSelect }) {
-  return (
-    <div className="tag-filter">
-      <button className={`tag-filter-btn${active === null ? " active" : ""}`} onClick={() => onSelect(null)}>Tutti</button>
-      {tags.map(t => (
-        <button key={t} className={`tag-filter-btn${active === t ? " active" : ""}`} onClick={() => onSelect(t)}>{t}</button>
-      ))}
-    </div>
-  );
-}
 
 function Modal({ children, onClose }) {
   return (
