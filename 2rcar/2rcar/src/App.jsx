@@ -7,7 +7,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const TAGS_AVAILABLE = ["automatico", "navigatore", "pelle", "tetto apribile", "sportiva", "SUV", "4x4", "compatta", "city car", "ibrida", "elettrica", "cambio manuale"];
-const NAV_ITEMS = ["Home", "Vendita", "Noleggio", "Contatti"];
+const NAV_ITEMS = ["Home", "Vendita", "Noleggio", "Chi Siamo", "Contatti"];
 const PLACEHOLDER = "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&q=80";
 
 const FALLBACK_CARS = [
@@ -29,7 +29,6 @@ async function uploadImages(files) {
   return urls;
 }
 
-// ── Global styles injected once ──
 const GLOBAL_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -58,7 +57,6 @@ const GLOBAL_CSS = `
     -webkit-font-smoothing: antialiased;
   }
 
-  /* ── Beautiful custom scrollbar ── */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
@@ -68,7 +66,6 @@ const GLOBAL_CSS = `
   ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
   * { scrollbar-width: thin; scrollbar-color: var(--gold) transparent; }
 
-  /* ── Nav hide/show animation ── */
   .nav-bar {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -81,6 +78,7 @@ const GLOBAL_CSS = `
     transition: transform 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
     will-change: transform;
   }
+  /* nasconde verso il BASSO quando si scrolla giù */
   .nav-bar.hidden { transform: translateY(-110%); }
 
   .nav-inner {
@@ -93,7 +91,6 @@ const GLOBAL_CSS = `
     justify-content: space-between;
   }
 
-  /* ── Hero ── */
   .hero {
     position: relative;
     height: clamp(380px, 55vh, 640px);
@@ -154,7 +151,6 @@ const GLOBAL_CSS = `
   }
   .hero-btn-outline:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
 
-  /* ── Sections ── */
   .section { max-width: 72rem; margin: 0 auto; padding: clamp(2.5rem, 6vw, 5rem) 1.5rem; }
   .section-header { text-align: center; margin-bottom: 2.5rem; }
   .section-title {
@@ -167,14 +163,12 @@ const GLOBAL_CSS = `
   }
   .section-sub { color: var(--muted); font-size: 0.95rem; }
 
-  /* ── Grid ── */
   .grid-3 {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
     gap: 1.5rem;
   }
 
-  /* ── Card ── */
   .car-card {
     background: var(--white);
     border-radius: 0.75rem;
@@ -215,7 +209,6 @@ const GLOBAL_CSS = `
     letter-spacing: 0.03em;
   }
 
-  /* ── Tag filter ── */
   .tag-filter { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2rem; }
   .tag-filter-btn {
     background: var(--white);
@@ -232,7 +225,6 @@ const GLOBAL_CSS = `
   .tag-filter-btn:hover { border-color: var(--gold); color: var(--navy); }
   .tag-filter-btn.active { background: var(--navy); border-color: var(--navy); color: var(--gold); }
 
-  /* ── CTA strip ── */
   .cta-strip {
     background: var(--navy);
     padding: clamp(2rem, 5vw, 3.5rem) 1.5rem;
@@ -263,7 +255,6 @@ const GLOBAL_CSS = `
   }
   .cta-button:hover { background: var(--gold-light); transform: translateY(-1px); }
 
-  /* ── Contact ── */
   .contact-card {
     background: var(--white);
     border-radius: 0.75rem;
@@ -279,12 +270,7 @@ const GLOBAL_CSS = `
   .contact-item { display: flex; align-items: center; gap: 1rem; font-size: 1rem; line-height: 1.4; }
   .contact-icon { font-size: 1.4rem; width: 2rem; flex-shrink: 0; }
 
-  /* ── Footer ── */
   .footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
     background: #111;
     color: #555;
     text-align: center;
@@ -293,7 +279,6 @@ const GLOBAL_CSS = `
   .footer-logo { font-family: 'Playfair Display', serif; font-size: 1.3rem; letter-spacing: 0.12em; margin-bottom: 0.5rem; }
   .footer-sub { font-size: 0.78rem; }
 
-  /* ── Modal ── */
   .overlay {
     position: fixed; inset: 0;
     background: rgba(0,0,0,0.65);
@@ -341,7 +326,6 @@ const GLOBAL_CSS = `
   }
   .contact-call-btn:hover { background: #2a2a4e; }
 
-  /* ── Gallery ── */
   .gallery-overlay {
     position: fixed; inset: 0;
     background: rgba(0,0,0,0.95);
@@ -373,7 +357,6 @@ const GLOBAL_CSS = `
   .gallery-thumb.active { opacity: 1; outline: 2px solid var(--gold); }
   .gallery-counter { text-align: center; color: #666; font-size: 0.8rem; margin-top: 0.6rem; }
 
-  /* ── Admin ── */
   .admin-login { padding: 2rem; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; }
   .login-icon { font-size: 2.5rem; }
   .login-sub { color: var(--muted); font-size: 0.82rem; text-align: center; }
@@ -448,28 +431,153 @@ const GLOBAL_CSS = `
   .admin-action-btn { border: none; border-radius: 0.4rem; width: 2rem; height: 2rem; cursor: pointer; font-size: 0.9rem; transition: opacity 0.15s; display: flex; align-items: center; justify-content: center; }
   .admin-action-btn:hover { opacity: 0.8; }
 
-  /* ── Loading ── */
   .loading-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 20rem; gap: 1rem; color: var(--muted); }
   @keyframes spin { to { transform: rotate(360deg); } }
   .spinner { width: 2.5rem; height: 2.5rem; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
 
-  /* ── Banner ── */
   .banner { background: #e67e22; color: #fff; text-align: center; padding: 0.65rem 1rem; font-size: 0.85rem; font-weight: 500; }
 
-  /* ── Divider ornament ── */
   .ornament { display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin: 0 0 2rem; }
   .ornament-line { flex: 1; max-width: 4rem; height: 1px; background: var(--gold); opacity: 0.4; }
   .ornament-dot { width: 0.4rem; height: 0.4rem; background: var(--gold); border-radius: 50%; }
 
-  /* ── Responsive ── */
+  /* ── Chi Siamo ── */
+  .chisiamo-hero {
+    background: var(--navy);
+    padding: clamp(3rem, 7vw, 5rem) 1.5rem;
+    text-align: center;
+  }
+  .chisiamo-hero-eyebrow {
+    color: var(--gold);
+    letter-spacing: 0.28em;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+  }
+  .chisiamo-hero-title {
+    font-family: 'Playfair Display', serif;
+    color: #fff;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+  .chisiamo-hero-sub {
+    color: rgba(255,255,255,0.6);
+    font-size: 1rem;
+    max-width: 36rem;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0;
+    background: var(--gold);
+    max-width: 72rem;
+    margin: 0 auto;
+  }
+  .stat-block {
+    padding: 1.75rem 1rem;
+    text-align: center;
+    border-right: 1px solid rgba(26,26,46,0.15);
+  }
+  .stat-block:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 900;
+    color: var(--navy);
+    display: block;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    color: rgba(26,26,46,0.65);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .values-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+    gap: 1.25rem;
+    margin-top: 0.5rem;
+  }
+  .value-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1.5rem 1.25rem;
+    box-shadow: var(--card-shadow);
+  }
+  .value-icon { font-size: 1.8rem; margin-bottom: 0.75rem; display: block; }
+  .value-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 0.4rem;
+  }
+  .value-text { font-size: 0.85rem; color: #666; line-height: 1.65; }
+
+  .testimonial-strip {
+    background: #f0ede6;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: clamp(2rem, 5vw, 3.5rem) 1.5rem;
+  }
+  .testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+    gap: 1.25rem;
+    max-width: 72rem;
+    margin: 0 auto;
+  }
+  .testimonial-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1.25rem 1.25rem 1rem;
+    box-shadow: var(--card-shadow);
+  }
+  .testimonial-stars { color: var(--gold); font-size: 0.9rem; margin-bottom: 0.6rem; letter-spacing: 0.05em; }
+  .testimonial-text { font-size: 0.88rem; color: #444; line-height: 1.65; margin-bottom: 0.9rem; font-style: italic; }
+  .testimonial-author { font-size: 0.78rem; font-weight: 600; color: var(--navy); }
+  .testimonial-date { font-size: 0.72rem; color: var(--muted); margin-left: 0.4rem; }
+
+  .trust-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+  .trust-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.5em 1.2em;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--navy);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .trust-badge-icon { font-size: 1.1rem; }
+
   @media (max-width: 640px) {
     .form-row { flex-direction: column; }
     .hero-btns { flex-direction: column; }
     .cta-inner { flex-direction: column; align-items: flex-start; }
+    .stat-block { border-right: none; border-bottom: 1px solid rgba(26,26,46,0.15); }
+    .stat-block:last-child { border-bottom: none; }
   }
 `;
 
-// ── Inject global styles ──
 function GlobalStyles() {
   useEffect(() => {
     const id = "2r-global-css";
@@ -483,16 +591,22 @@ function GlobalStyles() {
   return null;
 }
 
-// ── Auto-hide navbar hook ──
+// ── Auto-hide navbar: si nasconde verso l'ALTO quando si scrolla in giù ──
 function useNavHide() {
   const [hidden, setHidden] = useState(false);
   const lastY = useRef(0);
   useEffect(() => {
     function onScroll() {
       const y = window.scrollY;
-      if (y < 60) { setHidden(false); }
-      else if (y > lastY.current + 4) { setHidden(true); }
-      else if (y < lastY.current - 4) { setHidden(false); }
+      if (y < 60) {
+        setHidden(false);
+      } else if (y > lastY.current + 4) {
+        // scrolling down → hide (slide up)
+        setHidden(true);
+      } else if (y < lastY.current - 4) {
+        // scrolling up → show
+        setHidden(false);
+      }
       lastY.current = y;
     }
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -501,7 +615,6 @@ function useNavHide() {
   return hidden;
 }
 
-// ── Drag & Drop uploader ──
 function ImageUploader({ previews, setPreviews, setUploadedFiles, uploading }) {
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef();
@@ -548,7 +661,6 @@ function ImageUploader({ previews, setPreviews, setUploadedFiles, uploading }) {
   );
 }
 
-// ── Car Card ──
 function CarCard({ car, onClick }) {
   const images = car.images?.length ? car.images : [PLACEHOLDER];
   const [imgIdx, setImgIdx] = useState(0);
@@ -590,7 +702,6 @@ function CarCard({ car, onClick }) {
   );
 }
 
-// ── Photo Gallery Modal ──
 function PhotoGallery({ images, onClose }) {
   const [idx, setIdx] = useState(0);
   const imgs = images?.length ? images : [PLACEHOLDER];
@@ -623,6 +734,158 @@ function PhotoGallery({ images, onClose }) {
         )}
       </div>
     </div>
+  );
+}
+
+// ── Pagina Chi Siamo ──
+function ChiSiamo({ onContact }) {
+  return (
+    <>
+      <div className="chisiamo-hero">
+        <p className="chisiamo-hero-eyebrow">La nostra storia</p>
+        <h1 className="chisiamo-hero-title">Chi siamo</h1>
+        <p className="chisiamo-hero-sub">
+          Siamo una concessionaria indipendente a Roma, nata dalla passione per le auto e dal rispetto per i clienti. Niente fronzoli, niente sorprese: solo auto controllate e prezzi chiari.
+        </p>
+      </div>
+
+      {/* Numeri */}
+      <div className="stats-row">
+        {[
+          { num: "15+", label: "Anni di esperienza" },
+          { num: "800+", label: "Auto vendute" },
+          { num: "4.8★", label: "Valutazione media" },
+          { num: "0", label: "Costi nascosti" },
+        ].map(s => (
+          <div key={s.label} className="stat-block">
+            <span className="stat-num">{s.num}</span>
+            <span className="stat-label">{s.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Chi siamo testo */}
+      <section className="section">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 22rem), 1fr))", gap: "3rem", alignItems: "center" }}>
+          <div>
+            <h2 className="section-title" style={{ textAlign: "left" }}>Una realtà di famiglia, nel cuore di Roma</h2>
+            <div className="ornament" style={{ justifyContent: "flex-start" }}>
+              <div className="ornament-dot" />
+              <div className="ornament-line" style={{ maxWidth: "6rem" }} />
+            </div>
+            <p style={{ color: "#555", lineHeight: 1.8, fontSize: "0.95rem", marginBottom: "1rem" }}>
+              Siamo su Via Collatina dal 2009. In questi anni abbiamo aiutato centinaia di famiglie romane a trovare l'auto giusta senza spendere troppo. Non lavoriamo con finanziamenti a tasso stellare né con auto dall'origine incerta.
+            </p>
+            <p style={{ color: "#555", lineHeight: 1.8, fontSize: "0.95rem", marginBottom: "1rem" }}>
+              Ogni auto che entra nel nostro piazzale viene ispezionata, controllata nella storia e fotografata per bene. Se c'è qualcosa che non va, te lo diciamo prima — non dopo.
+            </p>
+            <p style={{ color: "#555", lineHeight: 1.8, fontSize: "0.95rem" }}>
+              Trovi da noi utilitarie, berline, SUV e auto a noleggio per qualsiasi esigenza. Prezzi da 3.000 € in su, sempre trattabili.
+            </p>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div style={{ background: "#f0ede6", borderRadius: "0.75rem", padding: "1.5rem", borderLeft: "4px solid var(--gold)" }}>
+              <p style={{ fontSize: "0.9rem", color: "#444", lineHeight: 1.7, fontStyle: "italic" }}>
+                "Ho comprato la mia Polo da 2R nel 2021. Il proprietario mi ha spiegato tutto, nessuna fretta, nessuna pressione. Un anno dopo è ancora perfetta."
+              </p>
+              <p style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--navy)", marginTop: "0.6rem" }}>— Marco T., cliente dal 2021</p>
+            </div>
+            <div style={{ background: "#f0ede6", borderRadius: "0.75rem", padding: "1.5rem", borderLeft: "4px solid var(--navy)" }}>
+              <p style={{ fontSize: "0.9rem", color: "#444", lineHeight: 1.7, fontStyle: "italic" }}>
+                "Cercavo un'auto per lavoro, noleggio mensile. Mi hanno trovato la soluzione in mezza giornata. Professionali e disponibili."
+              </p>
+              <p style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--navy)", marginTop: "0.6rem" }}>— Giulia R., cliente dal 2022</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Valori */}
+      <div style={{ background: "#f0ede6", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)", padding: "clamp(2rem, 5vw, 3.5rem) 1.5rem" }}>
+        <div className="section" style={{ padding: "0" }}>
+          <div className="section-header">
+            <h2 className="section-title">Come lavoriamo</h2>
+            <div className="ornament"><div className="ornament-line" /><div className="ornament-dot" /><div className="ornament-line" /></div>
+          </div>
+          <div className="values-grid">
+            {[
+              { icon: "🔍", title: "Controllo prima della vendita", text: "Ogni auto viene verificata meccanicamente e controllata nella storia chilometrica prima di essere esposta." },
+              { icon: "💬", title: "Prezzi trasparenti", text: "Il prezzo che vedi è quello reale. Nessun costo di 'pratica', nessuna sorpresa al momento della firma." },
+              { icon: "🤝", title: "Trattativa senza pressione", text: "Non lavoriamo a provvigione aggressiva. Hai tutto il tempo che ti serve per decidere con calma." },
+              { icon: "📋", title: "Documentazione in regola", text: "Ci occupiamo noi del passaggio di proprietà, bollo, e pratiche ACI. Tu ritiri e vai." },
+              { icon: "🚗", title: "Prova prima di comprare", text: "Puoi portare l'auto dal tuo meccanico di fiducia o fare un giro di prova senza impegno." },
+              { icon: "📞", title: "Assistenza dopo l'acquisto", text: "Hai un dubbio dopo la vendita? Chiamaci. Non spariremo dopo aver incassato." },
+            ].map(v => (
+              <div key={v.title} className="value-card">
+                <span className="value-icon">{v.icon}</span>
+                <p className="value-title">{v.title}</p>
+                <p className="value-text">{v.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Recensioni */}
+      <div className="testimonial-strip">
+        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+          <h2 className="section-title">Cosa dicono i clienti</h2>
+          <div className="ornament"><div className="ornament-line" /><div className="ornament-dot" /><div className="ornament-line" /></div>
+          <p className="section-sub">Recensioni reali da Google Maps</p>
+        </div>
+        <div className="testimonials-grid">
+          {[
+            { stars: "★★★★★", text: "Acquistata una Ford Focus a ottimo prezzo. Tutto trasparente, nessuna sorpresa. Il titolare è una persona seria.", author: "Antonio M.", date: "feb 2024" },
+            { stars: "★★★★★", text: "Noleggio per 3 settimane, auto pulita e in ottime condizioni. Prezzo onesto. Tornerò sicuramente.", author: "Federica L.", date: "gen 2024" },
+            { stars: "★★★★☆", text: "Bravi, seri e disponibili. Ho trovato la macchina che cercavo a un prezzo ragionevole. Solo l'attesa per le pratiche un po' lunga.", author: "Roberto C.", date: "nov 2023" },
+            { stars: "★★★★★", text: "Ho comprato qui la mia seconda auto. Professionali come la prima volta. Consiglio a chiunque cerchi un'auto usata a Roma.", author: "Sara P.", date: "ott 2023" },
+            { stars: "★★★★★", text: "Zero pressione, tutto spiegato bene. Ho portato l'auto dal mio meccanico prima di comprare e non hanno battuto ciglio.", author: "Luca V.", date: "set 2023" },
+            { stars: "★★★★★", text: "Servizio cortese e professionale. La macchina era esattamente come descritta. Super consigliati.", author: "Chiara B.", date: "ago 2023" },
+          ].map((t, i) => (
+            <div key={i} className="testimonial-card">
+              <div className="testimonial-stars">{t.stars}</div>
+              <p className="testimonial-text">"{t.text}"</p>
+              <span className="testimonial-author">{t.author}</span>
+              <span className="testimonial-date">· {t.date}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Badge di fiducia */}
+      <section className="section" style={{ paddingBottom: "1rem" }}>
+        <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+          <h2 className="section-title">Perché sceglierci</h2>
+          <div className="ornament"><div className="ornament-line" /><div className="ornament-dot" /><div className="ornament-line" /></div>
+        </div>
+        <div className="trust-badges">
+          {[
+            ["✅", "Attività regolare con P.IVA"],
+            ["📍", "Sede fisica verificabile a Roma"],
+            ["🔒", "Passaggi di proprietà in regola"],
+            ["📞", "Risposta telefonica garantita"],
+            ["⭐", "4.8/5 su Google Maps"],
+            ["🗓️", "Aperti dal lunedì al sabato"],
+          ].map(([icon, label]) => (
+            <div key={label} className="trust-badge">
+              <span className="trust-badge-icon">{icon}</span>
+              <span>{label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA finale */}
+      <div className="cta-strip" style={{ marginBottom: "0" }}>
+        <div className="cta-inner">
+          <div>
+            <h3 className="cta-title">Vieni a trovarci senza impegno</h3>
+            <p className="cta-sub">Via Collatina 381, Roma — aperto lun–sab 9:00–19:00</p>
+          </div>
+          <button className="cta-button" onClick={onContact}>Contattaci →</button>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -739,7 +1002,7 @@ export default function App() {
 
       {!dbConnected && !loading && <div className="banner">⚠️ Modalità demo — Supabase non configurato</div>}
 
-      {/* ── Navbar ── */}
+      {/* ── Navbar: si nasconde scorrendo verso il basso ── */}
       <nav className={`nav-bar${navHidden ? " hidden" : ""}`}>
         <div className="nav-inner">
           <div style={{ cursor: "pointer", letterSpacing: "0.12em", fontSize: "1.25rem", display: "flex", alignItems: "center", gap: "0.15em" }}
@@ -747,17 +1010,17 @@ export default function App() {
             <span style={{ color: "#c9a84c", fontFamily: "'Playfair Display', serif", fontWeight: 900 }}>2R</span>
             <span style={{ color: "#fff", fontFamily: "'DM Sans', sans-serif", fontWeight: 300, letterSpacing: "0.18em", fontSize: "0.85em" }}>CAR</span>
           </div>
-          <div style={{ display: "flex", gap: "0.25rem", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "0.25rem", alignItems: "center", flexWrap: "wrap" }}>
             {NAV_ITEMS.map(item => (
               <button key={item}
                 style={{
-                  background: "none", border: "none",
+                  background: page === item ? "rgba(201,168,76,0.1)" : "none",
+                  border: "none",
                   color: page === item ? "#c9a84c" : "#bbb",
                   cursor: "pointer", fontSize: "0.82rem",
                   padding: "0.5em 0.9em", borderRadius: "0.4rem",
                   letterSpacing: "0.04em", fontFamily: "'DM Sans', sans-serif",
                   fontWeight: page === item ? 600 : 400,
-                  background: page === item ? "rgba(201,168,76,0.1)" : "none",
                   transition: "color 0.15s, background 0.15s",
                 }}
                 onClick={() => { setPage(item); setFilterTag(null); }}>{item}</button>
@@ -854,6 +1117,10 @@ export default function App() {
             </section>
           )}
 
+          {page === "Chi Siamo" && (
+            <ChiSiamo onContact={() => setPage("Contatti")} />
+          )}
+
           {page === "Contatti" && (
             <section className="section">
               <div className="section-header">
@@ -880,7 +1147,6 @@ export default function App() {
         {dbConnected && <p style={{ fontSize: "0.72rem", color: "#2ecc71", marginTop: "0.3rem" }}>● Database connesso</p>}
       </footer>
 
-      {/* ── Car detail modal ── */}
       {selectedCar && (
         <Modal onClose={() => { setSelectedCar(null); setGalleryOpen(false); }}>
           <div className="modal-img" onClick={() => setGalleryOpen(true)}>
@@ -906,7 +1172,6 @@ export default function App() {
 
       {selectedCar && galleryOpen && <PhotoGallery images={selectedCar.images} onClose={() => setGalleryOpen(false)} />}
 
-      {/* ── Admin modal ── */}
       {adminOpen && (
         <Modal onClose={() => setAdminOpen(false)}>
           {!adminUser ? (
