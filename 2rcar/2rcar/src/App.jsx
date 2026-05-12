@@ -16,7 +16,6 @@ const FALLBACK_CARS = [
   { id: 3, brand: "Volkswagen", model: "Tiguan R-Line", year: 2021, price: 120, km: 45000, fuel: "Benzina", type: "noleggio", tags: ["SUV", "automatico", "4x4"], featured: true, images: ["https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&q=80"] },
 ];
 
-// ── Upload foto su Supabase Storage ──
 async function uploadImages(files) {
   const urls = [];
   for (const file of files) {
@@ -28,6 +27,56 @@ async function uploadImages(files) {
     urls.push(data.publicUrl);
   }
   return urls;
+}
+
+// ── Drag & Drop uploader con preview immediata ──
+function ImageUploader({ previews, setPreviews, setUploadedFiles, uploading }) {
+  const [dragging, setDragging] = useState(false);
+  const inputRef = useRef();
+
+  function handleFiles(files) {
+    const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
+    if (!imageFiles.length) return;
+    // Preview locale istantanea
+    const localUrls = imageFiles.map(f => ({ url: URL.createObjectURL(f), file: f }));
+    setPreviews(prev => [...prev, ...localUrls]);
+    setUploadedFiles(prev => [...prev, ...imageFiles]);
+  }
+
+  function removePreview(i) {
+    setPreviews(prev => prev.filter((_, j) => j !== i));
+    setUploadedFiles(prev => prev.filter((_, j) => j !== i));
+  }
+
+  return (
+    <div>
+      <div
+        style={{ ...styles.dropzone, ...(dragging ? styles.dropzoneActive : {}) }}
+        onDragOver={e => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={e => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
+        onClick={() => inputRef.current.click()}
+      >
+        <input ref={inputRef} type="file" multiple accept="image/*" style={{ display: "none" }}
+          onChange={e => handleFiles(e.target.files)} />
+        {uploading
+          ? <p style={styles.dropzoneText}>⏳ Upload in corso...</p>
+          : <p style={styles.dropzoneText}>📷 Trascina le foto qui oppure clicca per selezionarle<br /><span style={{ fontSize: 12, color: "#aaa" }}>Puoi caricare più foto alla volta</span></p>
+        }
+      </div>
+      {previews.length > 0 && (
+        <div style={styles.previewGrid}>
+          {previews.map((item, i) => (
+            <div key={i} style={styles.previewItem}>
+              <img src={item.url} alt="" style={styles.previewImg} />
+              <button type="button" style={styles.previewRemove} onClick={() => removePreview(i)}>✕</button>
+              {i === 0 && <span style={styles.previewMain}>Copertina</span>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ── Card con hover gallery ──
@@ -42,7 +91,7 @@ function CarCard({ car, onClick }) {
     intervalRef.current = setInterval(() => {
       i = (i + 1) % images.length;
       setImgIdx(i);
-    }, 600);
+    }, 700);
   }
 
   function handleMouseLeave() {
@@ -77,55 +126,19 @@ function CarCard({ car, onClick }) {
   );
 }
 
-// ── Drag & Drop uploader ──
-function ImageUploader({ images, setImages, uploading, setUploading }) {
-  const [dragging, setDragging] = useState(false);
-  const inputRef = useRef();
-
-  async function handleFiles(files) {
-    const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
-    if (!imageFiles.length) return;
-    setUploading(true);
-    const urls = await uploadImages(imageFiles);
-    setImages(prev => [...prev, ...urls]);
-    setUploading(false);
-  }
-
-  return (
-    <div>
-      <div
-        style={{ ...styles.dropzone, ...(dragging ? styles.dropzoneActive : {}) }}
-        onDragOver={e => { e.preventDefault(); setDragging(true); }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={e => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
-        onClick={() => inputRef.current.click()}
-      >
-        <input ref={inputRef} type="file" multiple accept="image/*" style={{ display: "none" }}
-          onChange={e => handleFiles(e.target.files)} />
-        {uploading
-          ? <p style={styles.dropzoneText}>⏳ Caricamento in corso...</p>
-          : <p style={styles.dropzoneText}>📷 Trascina le foto qui oppure clicca per selezionarle<br /><span style={{ fontSize: 12, color: "#aaa" }}>Puoi caricare più foto alla volta</span></p>
-        }
-      </div>
-      {images.length > 0 && (
-        <div style={styles.previewGrid}>
-          {images.map((url, i) => (
-            <div key={i} style={styles.previewItem}>
-              <img src={url} alt="" style={styles.previewImg} />
-              <button style={styles.previewRemove} onClick={() => setImages(prev => prev.filter((_, j) => j !== i))}>✕</button>
-              {i === 0 && <span style={styles.previewMain}>Copertina</span>}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Modal galleria foto ──
+// ── Galleria foto modal ──
 function PhotoGallery({ images, onClose }) {
   const [idx, setIdx] = useState(0);
   const imgs = images?.length ? images : [PLACEHOLDER];
+  useEffect(() => {
+    function handleKey(e) {
+      if (e.key === "ArrowRight") setIdx(i => (i + 1) % imgs.length);
+      if (e.key === "ArrowLeft") setIdx(i => (i - 1 + imgs.length) % imgs.length);
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [imgs.length]);
 
   return (
     <div style={styles.galleryOverlay} onClick={onClose}>
@@ -166,7 +179,8 @@ export default function App() {
   const [filterTag, setFilterTag] = useState(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [formImages, setFormImages] = useState([]);
+  const [formPreviews, setFormPreviews] = useState([]);
+  const [formFiles, setFormFiles] = useState([]);
   const [form, setForm] = useState({ brand: "", model: "", year: "", price: "", km: "", fuel: "Benzina", type: "vendita", tags: [], featured: false });
 
   useEffect(() => {
@@ -183,7 +197,7 @@ export default function App() {
       if (error) throw error;
       setCars(data || []);
       setDbConnected(true);
-    } catch (e) {
+    } catch {
       setCars(FALLBACK_CARS);
       setDbConnected(false);
     }
@@ -223,21 +237,33 @@ export default function App() {
     e.preventDefault();
     if (!adminUser) return;
     setSaving(true);
+    setUploading(true);
+
+    // Upload reale su Supabase Storage
+    let imageUrls = [];
+    if (formFiles.length > 0) {
+      imageUrls = await uploadImages(formFiles);
+    }
+    setUploading(false);
+
     const newCar = {
       brand: form.brand, model: form.model,
       year: parseInt(form.year), price: parseFloat(form.price), km: parseInt(form.km),
       fuel: form.fuel, type: form.type, tags: form.tags, featured: form.featured,
-      images: formImages.length ? formImages : [PLACEHOLDER],
+      images: imageUrls.length ? imageUrls : [PLACEHOLDER],
     };
+
     if (dbConnected) {
       const { data, error } = await supabase.from("cars").insert([newCar]).select().single();
-      if (error) { alert("Errore: " + error.message); setSaving(false); return; }
+      if (error) { alert("Errore DB: " + error.message); setSaving(false); return; }
       setCars(prev => [data, ...prev]);
     } else {
       setCars(prev => [{ ...newCar, id: Date.now() }, ...prev]);
     }
+
     setForm({ brand: "", model: "", year: "", price: "", km: "", fuel: "Benzina", type: "vendita", tags: [], featured: false });
-    setFormImages([]);
+    setFormPreviews([]);
+    setFormFiles([]);
     setSaving(false);
     alert("Annuncio aggiunto!");
   }
@@ -259,14 +285,11 @@ export default function App() {
   const filteredSale = filterTag ? saleCars.filter(c => c.tags?.includes(filterTag)) : saleCars;
   const filteredRental = filterTag ? rentalCars.filter(c => c.tags?.includes(filterTag)) : rentalCars;
   const allTags = [...new Set(cars.flatMap(c => c.tags || []))];
-
   const s = styles;
 
   return (
     <div style={s.root}>
-      {!dbConnected && !loading && (
-        <div style={s.banner}>⚠️ Modalità demo — Supabase non configurato</div>
-      )}
+      {!dbConnected && !loading && <div style={s.banner}>⚠️ Modalità demo — Supabase non configurato</div>}
 
       <nav style={s.nav}>
         <div style={s.navInner}>
@@ -363,9 +386,8 @@ export default function App() {
         {dbConnected && <p style={{ ...s.footerSub, color: "#2ecc71", marginTop: 4 }}>● Database connesso</p>}
       </footer>
 
-      {/* MODAL DETTAGLIO AUTO */}
       {selectedCar && (
-        <Modal onClose={() => setSelectedCar(null)}>
+        <Modal onClose={() => { setSelectedCar(null); setGalleryOpen(false); }}>
           <div style={s.modalImg} onClick={() => setGalleryOpen(true)}>
             <img src={selectedCar.images?.[0] || PLACEHOLDER} alt={selectedCar.model} style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "zoom-in" }} />
             {selectedCar.images?.length > 1 && (
@@ -387,12 +409,8 @@ export default function App() {
         </Modal>
       )}
 
-      {/* GALLERIA FOTO */}
-      {selectedCar && galleryOpen && (
-        <PhotoGallery images={selectedCar.images} onClose={() => setGalleryOpen(false)} />
-      )}
+      {selectedCar && galleryOpen && <PhotoGallery images={selectedCar.images} onClose={() => setGalleryOpen(false)} />}
 
-      {/* ADMIN MODAL */}
       {adminOpen && (
         <Modal onClose={() => setAdminOpen(false)}>
           {!adminUser ? (
@@ -439,7 +457,6 @@ export default function App() {
                   <option value="vendita">Vendita</option>
                   <option value="noleggio">Noleggio</option>
                 </select>
-
                 <div style={s.tagPicker}>
                   <p style={s.tagPickerLabel}>Tag:</p>
                   <div style={s.tagPickerGrid}>
@@ -449,16 +466,19 @@ export default function App() {
                     ))}
                   </div>
                 </div>
-
-                <p style={s.tagPickerLabel}>Foto:</p>
-                <ImageUploader images={formImages} setImages={setFormImages} uploading={uploading} setUploading={setUploading} />
-
+                <p style={{ ...s.tagPickerLabel, margin: "4px 0" }}>Foto:</p>
+                <ImageUploader
+                  previews={formPreviews}
+                  setPreviews={setFormPreviews}
+                  setUploadedFiles={setFormFiles}
+                  uploading={uploading}
+                />
                 <label style={s.checkLabel}>
                   <input type="checkbox" checked={form.featured} onChange={e => setForm({ ...form, featured: e.target.checked })} />
                   &nbsp; Metti in vetrina
                 </label>
                 <button type="submit" style={{ ...s.submitBtn, opacity: (saving || uploading) ? 0.6 : 1 }} disabled={saving || uploading}>
-                  {saving ? "Salvataggio..." : uploading ? "Attendi upload foto..." : "Aggiungi Annuncio"}
+                  {saving ? "Salvataggio..." : "Aggiungi Annuncio"}
                 </button>
               </form>
 
@@ -467,7 +487,7 @@ export default function App() {
                 {cars.map(car => (
                   <div key={car.id} style={s.adminListItem}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <img src={car.images?.[0] || PLACEHOLDER} alt="" style={{ width: 48, height: 36, objectFit: "cover", borderRadius: 4 }} />
+                      <img src={car.images?.[0] || PLACEHOLDER} alt="" style={{ width: 52, height: 38, objectFit: "cover", borderRadius: 4 }} />
                       <div style={s.adminListInfo}>
                         <strong>{car.brand} {car.model}</strong>
                         <span style={s.adminListSub}>{car.year} · {car.type === "noleggio" ? `€${car.price}/g` : `€${car.price?.toLocaleString()}`} · {car.images?.length || 1} foto</span>
@@ -568,24 +588,22 @@ const styles = {
   modal: { background: "#fff", borderRadius: 16, width: "100%", maxWidth: 580, maxHeight: "90vh", overflowY: "auto", position: "relative" },
   modalClose: { position: "absolute", top: 16, right: 16, background: "rgba(0,0,0,0.1)", border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", zIndex: 10, fontSize: 14 },
   modalImg: { height: 240, overflow: "hidden", borderRadius: "16px 16px 0 0", position: "relative" },
-  modalPhotoCount: { position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 12px", borderRadius: 20 },
+  modalPhotoCount: { position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 12, padding: "4px 12px", borderRadius: 20, whiteSpace: "nowrap" },
   modalBody: { padding: 28 },
   modalTags: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 },
   modalTitle: { fontSize: 26, fontWeight: 700, margin: "0 0 6px", color: "#1a1a2e" },
   modalYear: { color: "#888", fontSize: 14, margin: "0 0 16px" },
   modalPrice: { fontSize: 30, fontWeight: 700, color: "#c9a84c", margin: "0 0 24px" },
   contactCallBtn: { display: "block", background: "#1a1a2e", color: "#c9a84c", textAlign: "center", padding: "14px", borderRadius: 8, fontWeight: 700, textDecoration: "none", fontSize: 16, letterSpacing: 0.5 },
-  // Gallery
-  galleryOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center" },
-  galleryBox: { position: "relative", maxWidth: 900, width: "100%", padding: 20 },
-  galleryClose: { position: "absolute", top: -10, right: 10, background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", borderRadius: "50%", width: 36, height: 36, cursor: "pointer", fontSize: 18, zIndex: 10 },
-  galleryMain: { width: "100%", maxHeight: "65vh", objectFit: "contain", borderRadius: 8 },
-  galleryNav: { position: "absolute", top: "40%", background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", borderRadius: "50%", width: 44, height: 44, fontSize: 24, cursor: "pointer" },
-  galleryThumbs: { display: "flex", gap: 8, justifyContent: "center", marginTop: 12, flexWrap: "wrap" },
-  galleryThumb: { width: 64, height: 48, objectFit: "cover", borderRadius: 4, cursor: "pointer", opacity: 0.5 },
+  galleryOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.93)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center" },
+  galleryBox: { position: "relative", maxWidth: 900, width: "100%", padding: "40px 20px 20px" },
+  galleryClose: { position: "absolute", top: 4, right: 10, background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", borderRadius: "50%", width: 36, height: 36, cursor: "pointer", fontSize: 18, zIndex: 10 },
+  galleryMain: { width: "100%", maxHeight: "65vh", objectFit: "contain", borderRadius: 8, display: "block", margin: "0 auto" },
+  galleryNav: { position: "absolute", top: "45%", background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", borderRadius: "50%", width: 44, height: 44, fontSize: 28, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
+  galleryThumbs: { display: "flex", gap: 8, justifyContent: "center", marginTop: 14, flexWrap: "wrap" },
+  galleryThumb: { width: 64, height: 48, objectFit: "cover", borderRadius: 4, cursor: "pointer", opacity: 0.5, transition: "opacity .2s" },
   galleryThumbActive: { opacity: 1, outline: "2px solid #c9a84c" },
   galleryCounter: { textAlign: "center", color: "#888", fontSize: 13, marginTop: 8 },
-  // Admin
   adminLogin: { padding: 32, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 },
   loginIcon: { fontSize: 40 },
   loginSub: { color: "#888", fontSize: 13, margin: 0, textAlign: "center" },
@@ -605,13 +623,13 @@ const styles = {
   tagPickerGrid: { display: "flex", gap: 8, flexWrap: "wrap" },
   tagPickerBtn: { background: "#fff", border: "1px solid #ddd", padding: "5px 12px", borderRadius: 20, cursor: "pointer", fontSize: 12, fontFamily: "inherit" },
   tagPickerBtnActive: { background: "#1a1a2e", border: "1px solid #1a1a2e", color: "#c9a84c" },
-  dropzone: { border: "2px dashed #ddd", borderRadius: 10, padding: "28px 16px", textAlign: "center", cursor: "pointer", background: "#fafafa", transition: "all .2s" },
+  dropzone: { border: "2px dashed #ddd", borderRadius: 10, padding: "24px 16px", textAlign: "center", cursor: "pointer", background: "#fafafa", transition: "all .2s" },
   dropzoneActive: { border: "2px dashed #c9a84c", background: "#fffbf0" },
-  dropzoneText: { color: "#888", fontSize: 14, margin: 0, lineHeight: 1.8 },
+  dropzoneText: { color: "#888", fontSize: 14, margin: 0, lineHeight: 2 },
   previewGrid: { display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 },
   previewItem: { position: "relative", width: 80, height: 60 },
   previewImg: { width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 },
-  previewRemove: { position: "absolute", top: -6, right: -6, background: "#e74c3c", border: "none", color: "#fff", borderRadius: "50%", width: 18, height: 18, fontSize: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
+  previewRemove: { position: "absolute", top: -6, right: -6, background: "#e74c3c", border: "none", color: "#fff", borderRadius: "50%", width: 18, height: 18, fontSize: 10, cursor: "pointer" },
   previewMain: { position: "absolute", bottom: 2, left: 2, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 9, padding: "1px 4px", borderRadius: 3 },
   checkLabel: { fontSize: 14, display: "flex", alignItems: "center", cursor: "pointer" },
   submitBtn: { background: "#1a1a2e", color: "#c9a84c", border: "none", padding: "12px", borderRadius: 8, fontFamily: "inherit", fontSize: 15, fontWeight: 700, cursor: "pointer", letterSpacing: 0.5 },
