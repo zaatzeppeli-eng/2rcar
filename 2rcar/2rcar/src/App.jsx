@@ -375,6 +375,10 @@ const GLOBAL_CSS = `
   }
 
   .nav-mobile-actions { display: none; }
+  .nav-items-desktop { display: flex; }
+  @media (max-width: 768px) {
+    .nav-items-desktop { display: none !important; }
+  }
 `;
 
 function GlobalStyles() {
@@ -954,6 +958,9 @@ function MobileNav({ page, navigateTo, adminUser, setAdminOpen }) {
   return (
     <>
       <div className="nav-mobile-actions" style={{ gap: "0.4rem", alignItems: "center" }}>
+        <button style={{ background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.5)",color:"#c9a84c",cursor:"pointer",fontSize:"0.78rem",padding:"0.4em 0.9em",borderRadius:"0.4rem",fontFamily:"'DM Sans',sans-serif",fontWeight:600,letterSpacing:"0.04em",lineHeight:1 }} onClick={() => setAdminOpen(true)}>
+          {adminUser ? "Admin ✓" : "Login"}
+        </button>
         <a href="tel:+393000008654" style={{ background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.4)",color:"#c9a84c",borderRadius:"0.4rem",padding:"0.45em 0.7em",fontSize:"1.1rem",lineHeight:1,textDecoration:"none",display:"flex",alignItems:"center" }} aria-label="Chiama">📞</a>
         <button style={{ background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.18)",color:"#fff",borderRadius:"0.4rem",padding:"0.45em 0.65em",fontSize:"1.1rem",cursor:"pointer",lineHeight:1,display:"flex",alignItems:"center" }} onClick={() => setMenuOpen(o => !o)} aria-label="Menu">
           {menuOpen ? "✕" : "☰"}
@@ -966,10 +973,7 @@ function MobileNav({ page, navigateTo, adminUser, setAdminOpen }) {
               {item==="Home"&&"🏠 "}{item==="Vendita"&&"🚗 "}{item==="Noleggio"&&"🔑 "}{item==="Chi Siamo"&&"👋 "}{item==="Contatti"&&"📍 "}{item}
             </button>
           ))}
-          <div style={{ height:"1px",background:"rgba(255,255,255,0.08)",margin:"0.5rem 0" }} />
-          <button style={{ background:"rgba(201,168,76,0.12)",border:"1px solid rgba(201,168,76,0.35)",color:"#c9a84c",cursor:"pointer",fontSize:"0.88rem",padding:"0.75em 1em",borderRadius:"0.4rem",fontFamily:"'DM Sans',sans-serif",fontWeight:600,textAlign:"left" }} onClick={() => { setAdminOpen(true); setMenuOpen(false); }}>
-            🔐 {adminUser ? "Admin ✓" : "Login"}
-          </button>
+
         </div>
       )}
     </>
