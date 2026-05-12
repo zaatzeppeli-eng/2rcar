@@ -379,6 +379,129 @@ const GLOBAL_CSS = `
   @media (max-width: 768px) {
     .nav-items-desktop { display: none !important; }
   }
+
+  /* ── INTRO SCREEN ── */
+  #intro-screen {
+    position: fixed; inset: 0; z-index: 99999;
+    background: #04101f;
+    display: flex; align-items: center; justify-content: center;
+    will-change: opacity;
+    transition: opacity 0.75s cubic-bezier(0.4,0,0.2,1);
+    overflow: hidden;
+  }
+  #intro-screen.intro-hidden { opacity: 0; pointer-events: none; }
+
+  .intro-bg { position: absolute; inset: 0; pointer-events: none; }
+  .intro-bg-core {
+    background: radial-gradient(ellipse 72% 55% at 50% 50%, rgba(10,28,68,0.72) 0%, transparent 72%);
+    animation: intro-breathe 9s ease-in-out infinite;
+  }
+  .intro-bg-tl {
+    background: radial-gradient(ellipse 38% 28% at 14% 17%, rgba(16,42,95,0.22) 0%, transparent 70%);
+    animation: intro-drift 13s ease-in-out infinite alternate;
+  }
+  .intro-bg-br {
+    background: radial-gradient(ellipse 32% 22% at 85% 81%, rgba(22,48,108,0.16) 0%, transparent 70%);
+    animation: intro-drift 16s ease-in-out infinite alternate-reverse;
+  }
+  .intro-bg-vig {
+    background: radial-gradient(ellipse 100% 100% at 50% 50%, transparent 36%, rgba(2,6,18,0.82) 100%);
+  }
+
+  .intro-halo {
+    position: absolute; width: clamp(220px, 60vw, 340px); height: clamp(220px, 60vw, 340px); border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,76,0.1) 0%, rgba(201,168,76,0.035) 48%, transparent 68%);
+    top: 50%; left: 50%; transform: translate(-50%,-50%);
+    pointer-events: none;
+    animation: intro-halo 4.5s ease-in-out 2.8s infinite;
+  }
+
+  .intro-logo-wrap {
+    position: relative; z-index: 10;
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+    opacity: 0; transform: scale(0.90) translateY(12px); filter: blur(12px);
+    will-change: opacity, transform, filter;
+    animation: intro-emerge 2s cubic-bezier(0.22,1,0.36,1) 0.7s forwards;
+  }
+
+  .intro-mark { display: block; width: clamp(60px, 13vw, 84px); height: clamp(60px, 13vw, 84px); }
+
+  .intro-wordmark { display: flex; flex-direction: column; align-items: center; gap: clamp(4px, 1.2vw, 6px); }
+  .intro-wm-row { display: flex; align-items: baseline; line-height: 1; }
+  .intro-wm-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(30px, 9vw, 44px); font-weight: 900; letter-spacing: 0.02em;
+    color: #c9a84c; line-height: 1;
+  }
+  .intro-wm-car {
+    font-family: 'DM Sans', sans-serif;
+    font-size: clamp(13px, 3.5vw, 20px); font-weight: 300; letter-spacing: 0.35em;
+    color: rgba(201,168,76,0.62); line-height: 1;
+    padding-left: clamp(7px, 2vw, 12px); text-transform: uppercase;
+    align-self: flex-end; margin-bottom: 2px;
+  }
+  .intro-wm-sub {
+    font-family: 'DM Sans', sans-serif;
+    font-size: clamp(7.5px, 2vw, 9.5px); font-weight: 400; letter-spacing: 0.45em;
+    color: rgba(201,168,76,0.25); text-transform: uppercase; line-height: 1;
+  }
+
+  .intro-sep {
+    width: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.35), transparent);
+    animation: intro-expand 1.1s cubic-bezier(0.22,1,0.36,1) 2.2s forwards;
+  }
+  .intro-eyebrow {
+    font-family: 'DM Sans', sans-serif;
+    font-size: clamp(7px, 1.8vw, 9px); letter-spacing: 0.5em; font-weight: 400;
+    color: rgba(201,168,76,0.22); text-transform: uppercase;
+    opacity: 0; animation: intro-subfade 1.2s ease 2.6s forwards;
+  }
+
+  @keyframes intro-breathe { 0%,100%{transform:scale(1)} 50%{transform:scale(1.07)} }
+  @keyframes intro-drift { 0%{transform:translate(0,0)} 100%{transform:translate(22px,16px)} }
+  @keyframes intro-emerge {
+    0%   { opacity:0; transform:scale(0.90) translateY(12px); filter:blur(12px); }
+    58%  { opacity:1; filter:blur(0.6px); }
+    100% { opacity:1; transform:scale(1) translateY(0); filter:blur(0); }
+  }
+  @keyframes intro-halo {
+    0%,100% { opacity:0.5; transform:translate(-50%,-50%) scale(1); }
+    50%     { opacity:1;   transform:translate(-50%,-50%) scale(1.14); }
+  }
+  @keyframes intro-expand { 0%{width:0} 100%{width:min(160px, 42vw)} }
+  @keyframes intro-subfade { 0%{opacity:0} 100%{opacity:1} }
+
+  @media (max-width: 480px) {
+    .intro-halo { width: 220px; height: 220px; }
+    .intro-logo-wrap { gap: 14px; }
+    .intro-bg-core {
+      background: radial-gradient(ellipse 95% 70% at 50% 50%, rgba(10,28,68,0.68) 0%, transparent 72%);
+    }
+  }
+
+  @media (max-width: 360px) {
+    .intro-halo { width: 180px; height: 180px; }
+    .intro-wm-sub { letter-spacing: 0.3em; }
+    .intro-eyebrow { letter-spacing: 0.32em; }
+  }
+
+  @media (max-height: 500px) and (orientation: landscape) {
+    .intro-logo-wrap { gap: 10px; flex-direction: row; flex-wrap: wrap; justify-content: center; }
+    .intro-mark { width: 48px; height: 48px; }
+    .intro-wordmark { gap: 3px; }
+    .intro-wm-brand { font-size: 26px; }
+    .intro-wm-car { font-size: 13px; }
+    .intro-sep, .intro-eyebrow { display: none; }
+    .intro-halo { width: 160px; height: 160px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .intro-logo-wrap { animation:none; opacity:1; transform:none; filter:none; }
+    .intro-sep       { animation:none; width:min(160px, 42vw); }
+    .intro-eyebrow   { animation:none; opacity:1; }
+    .intro-halo, .intro-bg-core, .intro-bg-tl, .intro-bg-br { animation:none; }
+  }
 `;
 
 function GlobalStyles() {
@@ -392,6 +515,64 @@ function GlobalStyles() {
     return () => document.getElementById(id)?.remove();
   }, []);
   return null;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  INTRO SCREEN — cinematic fullscreen brand animation
+// ─────────────────────────────────────────────────────────────
+function IntroScreen({ onDone }) {
+  const ref = useRef(null);
+  const noAnim = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    const hold = noAnim ? 400 : 3800;
+    const t1 = setTimeout(() => {
+      if (ref.current) ref.current.classList.add("intro-hidden");
+    }, hold);
+    const t2 = setTimeout(() => {
+      document.body.style.overflow = "";
+      onDone();
+    }, hold + 800);
+    return () => { clearTimeout(t1); clearTimeout(t2); document.body.style.overflow = ""; };
+  }, []);
+
+  return (
+    <div id="intro-screen" ref={ref} aria-hidden="true">
+      <div className="intro-bg intro-bg-core" />
+      <div className="intro-bg intro-bg-tl" />
+      <div className="intro-bg intro-bg-br" />
+      <div className="intro-bg intro-bg-vig" />
+
+      <div className="intro-logo-wrap">
+        <div className="intro-halo" />
+
+        {/* Geometric mark */}
+        <svg className="intro-mark" viewBox="0 0 84 84" fill="none" aria-hidden="true">
+          <circle cx="42" cy="42" r="39" stroke="rgba(201,168,76,0.13)" strokeWidth="0.75"/>
+          <circle cx="42" cy="42" r="29" stroke="rgba(201,168,76,0.2)" strokeWidth="0.5"/>
+          <path d="M28 54 L42 31 L56 54" fill="none" stroke="rgba(201,168,76,0.16)" strokeWidth="0.75" strokeLinejoin="round"/>
+          <path d="M30 52 L42 33 L54 52" fill="none" stroke="#c9a84c" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
+          <line x1="5"  y1="42" x2="15" y2="42" stroke="rgba(201,168,76,0.38)" strokeWidth="0.75"/>
+          <line x1="69" y1="42" x2="79" y2="42" stroke="rgba(201,168,76,0.38)" strokeWidth="0.75"/>
+          <line x1="42" y1="5"  x2="42" y2="15" stroke="rgba(201,168,76,0.28)" strokeWidth="0.75"/>
+          <line x1="42" y1="69" x2="42" y2="79" stroke="rgba(201,168,76,0.28)" strokeWidth="0.75"/>
+          <circle cx="42" cy="42" r="3.2" fill="#c9a84c"/>
+        </svg>
+
+        <div className="intro-wordmark">
+          <div className="intro-wm-row">
+            <span className="intro-wm-brand">2erre</span>
+            <span className="intro-wm-car">Car</span>
+          </div>
+          <span className="intro-wm-sub">Vendita &amp; Noleggio · Roma</span>
+        </div>
+
+        <div className="intro-sep" />
+        <span className="intro-eyebrow">Dal 2009</span>
+      </div>
+    </div>
+  );
 }
 
 function useNavHide() {
@@ -1000,6 +1181,7 @@ function Modal({ children, onClose, wide }) {
 //  MAIN APP
 // ─────────────────────────────────────────────────────────────
 export default function App() {
+  const [introDone, setIntroDone] = useState(false);
   const [cars, setCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dbConnected, setDbConnected] = useState(false);
@@ -1230,14 +1412,16 @@ export default function App() {
     <div className="page-wrapper">
       <GlobalStyles />
 
+      {!introDone && <IntroScreen onDone={() => setIntroDone(true)} />}
+
       {!dbConnected && !loading && <div className="banner">⚠️ Modalità demo — Supabase non configurato</div>}
 
       {/* ── NAVBAR ── */}
       <nav className={`nav-bar${navHidden ? " hidden" : ""}`}>
         <div className="nav-inner">
-          <div style={{ cursor:"pointer",letterSpacing:"0.12em",fontSize:"1.25rem",display:"flex",alignItems:"center",gap:"0.15em" }} onClick={() => navigateTo("Home")}>
-            <span style={{ color:"#c9a84c",fontFamily:"'Playfair Display',serif",fontWeight:900 }}>2R</span>
-            <span style={{ color:"#fff",fontFamily:"'DM Sans',sans-serif",fontWeight:300,letterSpacing:"0.18em",fontSize:"0.85em" }}>CAR</span>
+          <div style={{ cursor:"pointer",letterSpacing:"0.06em",fontSize:"1.25rem",display:"flex",alignItems:"baseline",gap:"0.1em" }} onClick={() => navigateTo("Home")}>
+            <span style={{ color:"#c9a84c",fontFamily:"'Playfair Display',serif",fontWeight:900,letterSpacing:"0.02em" }}>2erre</span>
+            <span style={{ color:"rgba(255,255,255,0.75)",fontFamily:"'DM Sans',sans-serif",fontWeight:300,letterSpacing:"0.28em",fontSize:"0.72em",paddingLeft:"0.35em",textTransform:"uppercase" }}>Car</span>
           </div>
           <div className="nav-items-desktop" style={{ display:"flex",gap:"0.25rem",alignItems:"center",flexWrap:"wrap" }}>
             {NAV_ITEMS.map(item => (
@@ -1354,7 +1538,7 @@ export default function App() {
       </div>
 
       <footer className="footer">
-        <p className="footer-logo"><span style={{ color:"#c9a84c" }}>2R</span> CAR</p>
+        <p className="footer-logo"><span style={{ color:"#c9a84c",fontFamily:"'Playfair Display',serif",fontWeight:900 }}>2erre</span><span style={{ fontWeight:300,letterSpacing:"0.3em",fontSize:"0.75em",marginLeft:"0.4em",color:"#777" }}>CAR</span></p>
         <p className="footer-sub">Via Collatina, 381 — Roma</p>
         {dbConnected && <p style={{ fontSize:"0.72rem",color:"#2ecc71",marginTop:"0.3rem" }}>● Database connesso</p>}
       </footer>
