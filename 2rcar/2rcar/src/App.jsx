@@ -1707,7 +1707,7 @@ export default function App() {
       </div>
 
       <footer className="footer">
-        <p className="footer-logo"><span style={{color:"#c9a84c",fontFamily:"'Playfair Display',serif",fontWeight:900}}>2erre</span><span style={{fontWeight:300,letterSpacing:"0.3em",fontSize:"0.75em",marginLeft:"0.4em",color:"rgba(255,255,255,0.35)"}}>CAR</span></p>
+        <p className="footer-logo"><span style={{color:"#c9a84c",fontFamily:"'Playfair Display',serif",fontWeight:900}}>2erre</span><span style={{fontWeight:300,letterSpacing:"0.3em",fontSize:"0.75em",marginLeft:"0.4em",color:"rgba(255,255,255,0.35)"}}>professional car</span></p>
         <p className="footer-sub">Via Collatina, 381 — Roma</p>
         {dbConnected&&<p style={{fontSize:"0.72rem",color:"#2ecc71",marginTop:"0.3rem"}}>● Database connesso</p>}
       </footer>
