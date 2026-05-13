@@ -1601,7 +1601,7 @@ export default function App() {
         <div className="nav-inner">
           <div style={{cursor:"pointer",display:"flex",alignItems:"baseline",gap:"0.1em"}} onClick={()=>navigateTo("Home")}>
             <span style={{color:"#c9a84c",fontFamily:"'Playfair Display',serif",fontWeight:900,letterSpacing:"0.02em",fontSize:"1.25rem"}}>2erre</span>
-            <span style={{color:"rgba(255,255,255,0.75)",fontFamily:"'DM Sans',sans-serif",fontWeight:300,letterSpacing:"0.28em",fontSize:"0.9rem",paddingLeft:"0.35em",textTransform:"uppercase"}}>Car</span>
+            <span style={{color:"rgba(255,255,255,0.75)",fontFamily:"'DM Sans',sans-serif",fontWeight:300,letterSpacing:"0.28em",fontSize:"0.9rem",paddingLeft:"0.35em",textTransform:"uppercase"}}>Professional car</span>
           </div>
           <div className="nav-items-desktop" style={{display:"flex",gap:"0.25rem",alignItems:"center"}}>
             {NAV_ITEMS.map(item=>(
