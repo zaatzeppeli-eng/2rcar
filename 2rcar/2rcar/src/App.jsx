@@ -1022,7 +1022,7 @@ function IntroScreen({ onDone }) {
         <div className="intro-wordmark">
           <div className="intro-wm-row">
             <span className="intro-wm-brand">2erre</span>
-            <span className="intro-wm-car">Car</span>
+            <span className="intro-wm-car">professional car</span>
           </div>
           <span className="intro-wm-sub">Vendita &amp; Noleggio · Roma</span>
         </div>
