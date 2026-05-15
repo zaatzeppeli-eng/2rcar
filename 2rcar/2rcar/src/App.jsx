@@ -956,7 +956,7 @@ function IntroScreen({ onDone }) {
         <div className="intro-wordmark">
           <div className="intro-wm-row">
             <span className="intro-wm-brand">2erre</span>
-            <span className="intro-wm-car">professional car</span>
+            <span className="intro-wm-car">professional car S.R.L.</span>
           </div>
           <span className="intro-wm-sub">Vendita &amp; Noleggio · Roma</span>
         </div>
@@ -1576,7 +1576,7 @@ export default function App() {
         <div className="nav-inner">
           <div style={{cursor:"pointer",display:"flex",alignItems:"baseline",gap:"0.1em"}} onClick={()=>navigateTo("Home")}>
             <span style={{color:"#c9a84c",fontFamily:"'Playfair Display',serif",fontWeight:900,letterSpacing:"0.02em",fontSize:"1.25rem"}}>2erre</span>
-            <span style={{color:"rgba(255,255,255,0.75)",fontFamily:"'DM Sans',sans-serif",fontWeight:300,letterSpacing:"0.28em",fontSize:"0.9rem",paddingLeft:"0.35em",textTransform:"uppercase"}}>Professional car</span>
+            <span style={{color:"rgba(255,255,255,0.75)",fontFamily:"'DM Sans',sans-serif",fontWeight:300,letterSpacing:"0.28em",fontSize:"0.9rem",paddingLeft:"0.35em",textTransform:"uppercase"}}>Professional car S.R.L.</span>
           </div>
           <div className="nav-items-desktop" style={{display:"flex",gap:"0.25rem",alignItems:"center"}}>
             {NAV_ITEMS.map(item=>(
@@ -1682,7 +1682,7 @@ export default function App() {
       </div>
 
       <footer className="footer">
-        <p className="footer-logo"><span style={{color:"#c9a84c",fontFamily:"'Playfair Display',serif",fontWeight:900}}>2erre</span><span style={{fontWeight:300,letterSpacing:"0.3em",fontSize:"0.75em",marginLeft:"0.4em",color:"rgba(255,255,255,0.35)"}}>professional car</span></p>
+        <p className="footer-logo"><span style={{color:"#c9a84c",fontFamily:"'Playfair Display',serif",fontWeight:900}}>2erre</span><span style={{fontWeight:300,letterSpacing:"0.3em",fontSize:"0.75em",marginLeft:"0.4em",color:"rgba(255,255,255,0.35)"}}>professional car S.R.L.</span></p>
         <p className="footer-sub">Via Collatina, 381 — Roma</p>
         {dbConnected&&<p style={{fontSize:"0.72rem",color:"#2ecc71",marginTop:"0.3rem"}}>● Database connesso</p>}
       </footer>
