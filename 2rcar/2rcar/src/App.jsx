@@ -1745,10 +1745,8 @@ export default function App() {
             ):selectedCar.status==="noleggiata"?(
               <div style={{background:"#f0f0f0",color:"#7f8c8d",borderRadius:"0.5rem",padding:"0.9em",textAlign:"center",fontWeight:700}}>Attualmente noleggiata — contattaci per disponibilità</div>
             ):(
-              <div style={{display:"flex",flexDirection:"column",gap:"0.6rem"}}>
-<div style={{display:"flex",flexDirection:"column",gap:"0.6rem"}}>
-  
-    href={`https://wa.me/393930008654?text=${encodeURIComponent(`Salve, vorrei richiedere informazioni su ${selectedCar.brand} ${selectedCar.model}`)}`}
+           <div style={{display:"flex",flexDirection:"column",gap:"0.6rem"}}>
+    href={"https://wa.me/393930008654?text="+encodeURIComponent("Salve, vorrei richiedere informazioni su "+selectedCar.brand+" "+selectedCar.model)}
     target="_blank"
     rel="noopener noreferrer"
     className="contact-call-btn"
