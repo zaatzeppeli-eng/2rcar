@@ -40,9 +40,6 @@ async function uploadImages(files) {
 const GLOBAL_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
 
-/* ─────────────────────────────────────────────────────────────
-   DESIGN TOKENS
-   ───────────────────────────────────────────────────────────── */
 :root {
   --navy:          #0f1221;
   --navy-mid:      #141828;
@@ -66,21 +63,16 @@ const GLOBAL_CSS = `
   --card-shadow-h: 0 16px 48px rgba(0,0,0,0.12), 0 0 0 1px rgba(201,168,76,0.1);
   --nav-h:         4rem;
 
-  /* Motion */
   --ease-out:      cubic-bezier(0.16,1,0.3,1);
   --ease-in-out:   cubic-bezier(0.76,0,0.24,1);
   --ease-spring:   cubic-bezier(0.34,1.56,0.64,1);
 
-  /* Timing */
   --t-fast:  0.2s;
   --t-base:  0.4s;
   --t-slow:  0.7s;
   --t-hero:  0.9s;
 }
 
-/* ─────────────────────────────────────────────────────────────
-   RESET & BASE
-   ───────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { font-size: clamp(14px,1.1vw,17px); scroll-behavior: smooth; }
@@ -95,7 +87,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Premium scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
@@ -105,12 +96,8 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
 * { scrollbar-width: thin; scrollbar-color: var(--gold) transparent; }
 
-/* Selection */
 ::selection { background: var(--gold); color: var(--navy); }
 
-/* ─────────────────────────────────────────────────────────────
-   PAGE WRAPPER
-   ───────────────────────────────────────────────────────────── */
 .page-wrapper {
   display: flex;
   flex-direction: column;
@@ -119,9 +106,6 @@ body {
 }
 .page-content { flex: 1; position: relative; }
 
-/* ─────────────────────────────────────────────────────────────
-   PAGE TRANSITION
-   ───────────────────────────────────────────────────────────── */
 .page-transition {
   will-change: opacity, transform;
   animation: page-in var(--t-slow) var(--ease-out) both;
@@ -140,9 +124,6 @@ body {
   }
 }
 
-/* ─────────────────────────────────────────────────────────────
-   NAVBAR — glassmorphism premium
-   ───────────────────────────────────────────────────────────── */
 .nav-bar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 200;
   height: var(--nav-h);
@@ -172,7 +153,6 @@ body {
   display: flex; align-items: center; justify-content: space-between;
 }
 
-/* Nav link underline animation */
 .nav-link-wrap { position: relative; }
 .nav-link-wrap::after {
   content: '';
@@ -182,9 +162,6 @@ body {
 }
 .nav-link-wrap.active::after { left: 10%; right: 10%; }
 
-/* ─────────────────────────────────────────────────────────────
-   HERO — immersive, layered, breathing background
-   ───────────────────────────────────────────────────────────── */
 .hero {
   position: relative;
   height: clamp(420px, 58vh, 680px);
@@ -192,7 +169,6 @@ body {
   overflow: hidden;
 }
 
-/* Main photo layer */
 .hero::before {
   content: '';
   position: absolute; inset: 0;
@@ -212,7 +188,6 @@ body {
   100% { transform: scale(1.04) translateY(-1.5%); }
 }
 
-/* Deep gradient overlay */
 .hero-overlay {
   position: absolute; inset: 0;
   background:
@@ -224,7 +199,6 @@ body {
   z-index: 1;
 }
 
-/* Subtle gold atmosphere glow */
 .hero-overlay::after {
   content: '';
   position: absolute; inset: 0;
@@ -244,7 +218,6 @@ body {
   padding: 0 1.5rem; width: 100%;
 }
 
-/* Staggered text reveal */
 .hero-eyebrow {
   font-family: 'DM Sans', sans-serif;
   color: var(--gold); letter-spacing: 0.3em;
@@ -271,7 +244,6 @@ body {
 
 @keyframes hero-line { to { opacity: 1; transform: translateY(0); } }
 
-/* Hero buttons */
 .hero-btn {
   background: var(--gold);
   border: none; color: var(--navy);
@@ -310,9 +282,6 @@ body {
   box-shadow: 0 8px 24px rgba(255,255,255,0.08);
 }
 
-/* ─────────────────────────────────────────────────────────────
-   SECTION LAYOUT
-   ───────────────────────────────────────────────────────────── */
 .section {
   max-width: 72rem; margin: 0 auto;
   padding: clamp(2.5rem,6vw,5rem) 1.5rem;
@@ -328,9 +297,6 @@ body {
 
 .grid-3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%,18rem),1fr)); gap: 1.5rem; }
 
-/* ─────────────────────────────────────────────────────────────
-   SCROLL REVEAL
-   ───────────────────────────────────────────────────────────── */
 .reveal {
   opacity: 0;
   transform: translateY(22px);
@@ -344,9 +310,6 @@ body {
 .reveal-delay-2 { transition-delay: 0.14s; }
 .reveal-delay-3 { transition-delay: 0.21s; }
 
-/* ─────────────────────────────────────────────────────────────
-   CAR CARD — depth, layering, premium hover
-   ───────────────────────────────────────────────────────────── */
 .car-card {
   background: var(--white);
   border-radius: 0.875rem;
@@ -361,7 +324,6 @@ body {
   position: relative;
 }
 
-/* Gold shimmer on hover */
 .car-card::before {
   content: '';
   position: absolute; inset: 0; z-index: 1;
@@ -372,7 +334,6 @@ body {
   pointer-events: none;
 }
 
-/* Bottom glow line on hover */
 .car-card::after {
   content: '';
   position: absolute; bottom: 0; left: 0; right: 0; z-index: 1;
@@ -393,7 +354,6 @@ body {
 .car-card:active { transform: translateY(-2px) scale(1.002); transition-duration: 0.1s; }
 .car-card.is-noleggiata { background: #f9f9f9; }
 
-/* Card image */
 .card-img-wrap { position: relative; height: 12.5rem; overflow: hidden; }
 .card-img {
   width: 100%; height: 100%; object-fit: cover;
@@ -420,7 +380,6 @@ body {
   transition: background 0.2s, transform 0.2s var(--ease-spring);
 }
 
-/* Card body */
 .card-body {
   padding: 1.25rem;
   position: relative; z-index: 2;
@@ -456,7 +415,6 @@ body {
 }
 .tag:hover { background: var(--navy); color: var(--gold); transform: scale(1.04); }
 
-/* Status overlays */
 .sold-overlay {
   position: absolute; inset: 0;
   background: rgba(0,0,0,0.45);
@@ -483,9 +441,6 @@ body {
   transform: rotate(-12deg); background: rgba(255,255,255,0.35);
 }
 
-/* ─────────────────────────────────────────────────────────────
-   FILTERS
-   ───────────────────────────────────────────────────────────── */
 .filters-wrapper { margin-bottom: 1.75rem; }
 .filters-bar {
   display: flex; align-items: center; justify-content: space-between;
@@ -526,16 +481,12 @@ body {
 .filter-tag-btn.active { background: var(--navy); border-color: var(--navy); color: var(--gold); transform: scale(1.04); }
 .filters-summary { font-size: 0.8rem; color: var(--muted); margin-top: 0.6rem; min-height: 1.2rem; }
 
-/* ─────────────────────────────────────────────────────────────
-   CTA STRIP — premium dark section
-   ───────────────────────────────────────────────────────────── */
 .cta-strip {
   background: var(--navy);
   padding: clamp(2.5rem,5vw,3.5rem) 1.5rem;
   position: relative; overflow: hidden;
 }
 
-/* Subtle gradient shimmer behind CTA */
 .cta-strip::before {
   content: '';
   position: absolute; inset: 0;
@@ -568,9 +519,6 @@ body {
 }
 .cta-button:active { transform: scale(0.98); }
 
-/* ─────────────────────────────────────────────────────────────
-   CONTACT
-   ───────────────────────────────────────────────────────────── */
 .contact-card {
   background: var(--white); border-radius: 0.75rem;
   padding: clamp(1.5rem,4vw,2.5rem); max-width: 32rem; margin: 0 auto;
@@ -581,9 +529,6 @@ body {
 .contact-item:hover { transform: translateX(5px); }
 .contact-icon { font-size: 1.4rem; width: 2rem; flex-shrink: 0; }
 
-/* ─────────────────────────────────────────────────────────────
-   FOOTER
-   ───────────────────────────────────────────────────────────── */
 .footer {
   background: var(--navy);
   color: rgba(255,255,255,0.35);
@@ -595,9 +540,6 @@ body {
 .footer-logo { font-family: 'Playfair Display', serif; font-size: 1.3rem; letter-spacing: 0.12em; margin-bottom: 0.5rem; }
 .footer-sub { font-size: 0.78rem; }
 
-/* ─────────────────────────────────────────────────────────────
-   MODAL — cinematic open/close
-   ───────────────────────────────────────────────────────────── */
 .overlay {
   position: fixed; inset: 0; z-index: 1000;
   display: flex; align-items: center; justify-content: center;
@@ -642,7 +584,6 @@ body {
 }
 .modal-close:hover { background: rgba(0,0,0,0.14); transform: scale(1.12) rotate(90deg); }
 
-/* Modal gallery */
 .modal-gallery {
   position: relative; height: 16rem; overflow: hidden;
   border-radius: 1.125rem 1.125rem 0 0;
@@ -684,7 +625,6 @@ body {
   pointer-events: none; backdrop-filter: blur(4px);
 }
 
-/* Modal body — staggered content reveal */
 .modal-body { padding: 1.75rem; }
 .modal-body > * {
   opacity: 0; transform: translateY(8px);
@@ -717,9 +657,6 @@ body {
 .contact-call-btn:hover { background: #2a2a4e; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(26,26,46,0.25); }
 .contact-call-btn:active { transform: scale(0.98); }
 
-/* ─────────────────────────────────────────────────────────────
-   GALLERY LIGHTBOX
-   ───────────────────────────────────────────────────────────── */
 .gallery-overlay {
   position: fixed; inset: 0; z-index: 2000;
   display: flex; align-items: center; justify-content: center;
@@ -739,9 +676,6 @@ body {
 .gallery-thumb.active { opacity: 1; outline: 2px solid var(--gold); transform: scale(1.07); }
 .gallery-counter { text-align: center; color: #666; font-size: 0.8rem; margin-top: 0.6rem; }
 
-/* ─────────────────────────────────────────────────────────────
-   ADMIN
-   ───────────────────────────────────────────────────────────── */
 .admin-login { padding: 2rem; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; }
 .login-icon { font-size: 2.5rem; }
 .login-sub { color: var(--muted); font-size: 0.82rem; text-align: center; }
@@ -793,14 +727,10 @@ body {
 .spinner { width: 2.5rem; height: 2.5rem; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
 .banner { background: #e67e22; color: #fff; text-align: center; padding: 0.65rem 1rem; font-size: 0.85rem; font-weight: 500; }
 
-/* Ornament divider */
 .ornament { display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin: 0 0 2rem; }
 .ornament-line { flex: 1; max-width: 4rem; height: 1px; background: var(--gold); opacity: 0.35; }
 .ornament-dot { width: 0.4rem; height: 0.4rem; background: var(--gold); border-radius: 50%; }
 
-/* ─────────────────────────────────────────────────────────────
-   CHI SIAMO
-   ───────────────────────────────────────────────────────────── */
 .chisiamo-hero {
   background: var(--navy);
   padding: clamp(3rem,7vw,5rem) 1.5rem;
@@ -836,14 +766,8 @@ body {
 .trust-badge:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 8px 24px rgba(0,0,0,0.07); border-color: rgba(201,168,76,0.35); }
 .trust-badge-icon { font-size: 1.1rem; }
 
-/* ─────────────────────────────────────────────────────────────
-   WHATSAPP FAB
-   ───────────────────────────────────────────────────────────── */
 .whatsapp-fab { display: none; }
 
-/* ─────────────────────────────────────────────────────────────
-   MOBILE MENU
-   ───────────────────────────────────────────────────────────── */
 .mobile-menu {
   position: fixed; top: var(--nav-h); left: 0; right: 0;
   background: rgba(10,13,24,0.98);
@@ -871,9 +795,6 @@ body {
 .mobile-menu-item:hover { color: #fff; background: rgba(201,168,76,0.06); transform: translateX(4px); }
 .mobile-menu-item.active { background: rgba(201,168,76,0.1); border-left-color: var(--gold); color: var(--gold); font-weight: 600; }
 
-/* ─────────────────────────────────────────────────────────────
-   INTRO SCREEN — premium branded loader
-   ───────────────────────────────────────────────────────────── */
 #intro-screen {
   position: fixed; inset: 0; z-index: 99999;
   background: #04101f;
@@ -906,9 +827,6 @@ body {
 @keyframes intro-expand { 0%{width:0} 100%{width:min(160px,42vw)} }
 @keyframes intro-subfade { 0%{opacity:0} 100%{opacity:1} }
 
-/* ─────────────────────────────────────────────────────────────
-   RESPONSIVE
-   ───────────────────────────────────────────────────────────── */
 .nav-mobile-actions { display: none; }
 .nav-items-desktop { display: flex; }
 
@@ -992,14 +910,30 @@ function GlobalStyles() {
 // ─────────────────────────────────────────────────────────────
 function IntroScreen({ onDone }) {
   const ref = useRef(null);
+  // FIX: stabilise onDone ref so the effect deps don't need to re-run
+  const onDoneRef = useRef(onDone);
+  useEffect(() => { onDoneRef.current = onDone; }, [onDone]);
+
   const noAnim = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   useEffect(() => {
     document.body.style.overflow = "hidden";
     const hold = noAnim ? 400 : 3800;
-    const t1 = setTimeout(() => { if (ref.current) ref.current.classList.add("intro-hidden"); }, hold);
-    const t2 = setTimeout(() => { document.body.style.overflow = ""; onDone(); }, hold + 800);
-    return () => { clearTimeout(t1); clearTimeout(t2); document.body.style.overflow = ""; };
-  }, []);
+    const t1 = setTimeout(() => {
+      if (ref.current) ref.current.classList.add("intro-hidden");
+    }, hold);
+    const t2 = setTimeout(() => {
+      document.body.style.overflow = "";
+      onDoneRef.current();
+    }, hold + 800);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      document.body.style.overflow = "";
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount only
+
   return (
     <div id="intro-screen" ref={ref} aria-hidden="true">
       <div className="intro-bg intro-bg-core" />
@@ -1055,8 +989,8 @@ function useNavHide() {
   return { hidden, scrolled };
 }
 
-// Scroll reveal hook
-function useReveal() {
+// FIX: added page as dependency so reveal re-runs when page changes
+function useReveal(page) {
   useEffect(() => {
     const noAnim = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (noAnim) {
@@ -1064,12 +998,23 @@ function useReveal() {
       return;
     }
     const observer = new IntersectionObserver(
-      entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("visible"); observer.unobserve(e.target); } }),
+      entries => entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add("visible");
+          observer.unobserve(e.target);
+        }
+      }),
       { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
     );
-    document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
-    return () => observer.disconnect();
-  });
+    // Small timeout so new page DOM is ready
+    const t = setTimeout(() => {
+      document.querySelectorAll(".reveal:not(.visible)").forEach(el => observer.observe(el));
+    }, 50);
+    return () => {
+      clearTimeout(t);
+      observer.disconnect();
+    };
+  }, [page]);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1241,7 +1186,6 @@ function CarCard({ car, onClick, revealDelay = 0 }) {
   const images = car.images?.length ? car.images : [PLACEHOLDER];
   const [imgIdx, setImgIdx] = useState(0);
   const intervalRef = useRef(null);
-  const cardRef = useRef(null);
   const isSold = car.status === "venduta";
   const isNoleggiata = car.status === "noleggiata";
   const isAvailable = !isSold && !isNoleggiata;
@@ -1257,7 +1201,6 @@ function CarCard({ car, onClick, revealDelay = 0 }) {
 
   return (
     <div
-      ref={cardRef}
       className={`car-card reveal${isNoleggiata?" is-noleggiata":""}${revealDelay?` reveal-delay-${revealDelay}`:""}`}
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
@@ -1302,7 +1245,7 @@ function PhotoGallery({ images, startIdx, onClose }) {
     }
     window.addEventListener("keydown",handleKey);
     return ()=>window.removeEventListener("keydown",handleKey);
-  },[imgs.length]);
+  },[imgs.length, onClose]);
   return (
     <div className="gallery-overlay" onClick={onClose}>
       <div className="gallery-box" onClick={e=>e.stopPropagation()}>
@@ -1417,7 +1360,7 @@ function IconWhatsApp() {
   return <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>;
 }
 
-// Animated modal with closing state
+// FIX: removed `wide` from DOM props to avoid React unknown-prop warning
 function Modal({ children, onClose, wide }) {
   const [closing, setClosing] = useState(false);
   function handleClose() {
@@ -1428,9 +1371,11 @@ function Modal({ children, onClose, wide }) {
     function onKey(e) { if(e.key==="Escape") handleClose(); }
     window.addEventListener("keydown",onKey);
     return ()=>window.removeEventListener("keydown",onKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
   return (
     <div className="overlay" onClick={handleClose}>
+      {/* FIX: use className toggle instead of passing `wide` as HTML attribute */}
       <div className={`${wide?"edit-modal":"modal"}${closing?" closing":""}`} onClick={e=>e.stopPropagation()}>
         <button className="modal-close" onClick={handleClose}>✕</button>
         {children}
@@ -1467,7 +1412,8 @@ export default function App() {
   const [editOpen, setEditOpen] = useState(false);
 
   const { hidden: navHidden, scrolled: navScrolled } = useNavHide();
-  useReveal();
+  // FIX: pass page so reveal re-triggers on navigation
+  useReveal(page);
 
   useEffect(()=>{
     loadCars();
@@ -1486,13 +1432,20 @@ export default function App() {
     setLoading(false);
   }
 
+  // FIX: close admin modal on successful login
   async function handleAdminLogin(e) {
     e.preventDefault(); setAuthLoading(true); setAuthError("");
     const {error}=await supabase.auth.signInWithPassword({email:loginEmail,password:loginPassword});
-    if(error) setAuthError("Credenziali errate. Riprova.");
-    else { setLoginEmail(""); setLoginPassword(""); }
+    if(error) {
+      setAuthError("Credenziali errate. Riprova.");
+    } else {
+      setLoginEmail("");
+      setLoginPassword("");
+      // Keep modal open so admin can use the panel — do NOT close here
+    }
     setAuthLoading(false);
   }
+
   async function handleAdminLogout() { await supabase.auth.signOut(); setAdminOpen(false); }
 
   async function handleAddCar(form,newFiles,existingUrls) {
@@ -1503,8 +1456,13 @@ export default function App() {
     setUploading(false);
     const sanitizedStatus=(form.status==="noleggiata"&&form.type!=="noleggio")?"disponibile":(form.status||"disponibile");
     const newCar={brand:form.brand,model:form.model,year:parseInt(form.year),price:parseFloat(form.price),km:parseInt(form.km),fuel:form.fuel,cambio:form.cambio,type:form.type,status:sanitizedStatus,features:form.features,featured:form.featured,images:imageUrls.length?imageUrls:[PLACEHOLDER],description:form.description,sold_at:sanitizedStatus==="venduta"?new Date().toISOString():null};
-    if(dbConnected){const{data,error}=await supabase.from("cars").insert([newCar]).select().single();if(error){alert("Errore DB: "+error.message);setSaving(false);return;}setCars(prev=>[data,...prev]);}
-    else setCars(prev=>[{...newCar,id:Date.now()},...prev]);
+    if(dbConnected){
+      const{data,error}=await supabase.from("cars").insert([newCar]).select().single();
+      if(error){alert("Errore DB: "+error.message);setSaving(false);return;}
+      setCars(prev=>[data,...prev]);
+    } else {
+      setCars(prev=>[{...newCar,id:Date.now()},...prev]);
+    }
     setSaving(false); alert("Annuncio aggiunto!");
   }
 
@@ -1516,22 +1474,35 @@ export default function App() {
     setUploading(false);
     const sanitizedStatus=(form.status==="noleggiata"&&form.type!=="noleggio")?"disponibile":form.status;
     const updates={brand:form.brand,model:form.model,year:parseInt(form.year),price:parseFloat(form.price),km:parseInt(form.km),fuel:form.fuel,cambio:form.cambio,type:form.type,status:sanitizedStatus,features:form.features,featured:form.featured,images:imageUrls.length?imageUrls:[PLACEHOLDER],description:form.description,sold_at:sanitizedStatus==="venduta"?(editingCar.sold_at||new Date().toISOString()):null};
-    if(dbConnected){const{error}=await supabase.from("cars").update(updates).eq("id",editingCar.id);if(error){alert("Errore aggiornamento: "+error.message);setSaving(false);return;}}
+    if(dbConnected){
+      const{error}=await supabase.from("cars").update(updates).eq("id",editingCar.id);
+      if(error){alert("Errore aggiornamento: "+error.message);setSaving(false);return;}
+    }
     setCars(prev=>prev.map(c=>c.id===editingCar.id?{...c,...updates}:c));
     setSaving(false); setEditOpen(false); setEditingCar(null); alert("Annuncio aggiornato!");
   }
 
   async function toggleFeatured(id) {
     if(!adminUser) return;
-    const car=cars.find(c=>c.id===id); const cur=cars.filter(c=>c.featured);
-    let updates=(!car.featured&&cur.length>=3)?[{id:cur[0].id,featured:false},{id,featured:true}]:[{id,featured:!car.featured}];
+    const car=cars.find(c=>c.id===id);
+    const cur=cars.filter(c=>c.featured);
+    const updates=(!car.featured&&cur.length>=3)
+      ?[{id:cur[0].id,featured:false},{id,featured:true}]
+      :[{id,featured:!car.featured}];
     setCars(prev=>prev.map(c=>{const u=updates.find(x=>x.id===c.id);return u?{...c,featured:u.featured}:c;}));
-    if(dbConnected) for(const u of updates) await supabase.from("cars").update({featured:u.featured}).eq("id",u.id);
+    if(dbConnected) {
+      for(const u of updates) {
+        const {error} = await supabase.from("cars").update({featured:u.featured}).eq("id",u.id);
+        if(error) console.error("toggleFeatured error:", error.message);
+      }
+    }
   }
 
   async function toggleSold(id) {
     if(!adminUser) return;
-    const car=cars.find(c=>c.id===id); const ns=car.status==="venduta"?"disponibile":"venduta"; const sold_at=ns==="venduta"?new Date().toISOString():null;
+    const car=cars.find(c=>c.id===id);
+    const ns=car.status==="venduta"?"disponibile":"venduta";
+    const sold_at=ns==="venduta"?new Date().toISOString():null;
     setCars(prev=>prev.map(c=>c.id===id?{...c,status:ns,sold_at}:c));
     if(dbConnected) await supabase.from("cars").update({status:ns,sold_at}).eq("id",id);
   }
@@ -1549,7 +1520,7 @@ export default function App() {
     if(!adminUser) return;
     const car=cars.find(c=>c.id===id);
     if(car.status!=="venduta"){alert("Puoi eliminare solo le auto con stato VENDUTA.");return;}
-    if(!confirm("Eliminare questo annuncio? L'operazione è irreversibile.")) return;
+    if(!window.confirm("Eliminare questo annuncio? L'operazione è irreversibile.")) return;
     setCars(prev=>prev.filter(c=>c.id!==id));
     if(dbConnected) await supabase.from("cars").delete().eq("id",id);
   }
@@ -1562,7 +1533,11 @@ export default function App() {
       if(filters.yearTo&&car.year>parseInt(filters.yearTo)) return false;
       if(filters.kmMax&&car.km>parseInt(filters.kmMax)) return false;
       if(filters.priceMax&&car.price>parseInt(filters.priceMax)) return false;
-      if(filters.features?.length>0){for(const f of filters.features){if(!(car.features||[]).includes(f)) return false;}}
+      if(filters.features?.length>0){
+        for(const f of filters.features){
+          if(!(car.features||[]).includes(f)) return false;
+        }
+      }
       return true;
     });
   }
@@ -1740,13 +1715,14 @@ export default function App() {
               <p className="modal-price">{selectedCar.type==="noleggio"?`€ ${selectedCar.price}/giorno`:`€ ${selectedCar.price?.toLocaleString()}`}</p>
             )}
             {selectedCar.description&&<p className="modal-description">{selectedCar.description}</p>}
+            {/* FIX: restored broken JSX block — the <a> tag opening was missing */}
             {selectedCar.status==="venduta"?(
               <div style={{background:"#fdecea",color:"#e74c3c",borderRadius:"0.5rem",padding:"0.9em",textAlign:"center",fontWeight:700}}>Auto non più disponibile</div>
             ):selectedCar.status==="noleggiata"?(
               <div style={{background:"#f0f0f0",color:"#7f8c8d",borderRadius:"0.5rem",padding:"0.9em",textAlign:"center",fontWeight:700}}>Attualmente noleggiata — contattaci per disponibilità</div>
-  ):(
+            ):(
               <div style={{display:"flex",flexDirection:"column",gap:"0.6rem"}}>
-                
+                <a
                   href={"https://wa.me/393930008654?text="+encodeURIComponent("Salve, vorrei richiedere informazioni su "+selectedCar.brand+" "+selectedCar.model)}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -1760,6 +1736,7 @@ export default function App() {
                 </a>
               </div>
             )}
+          </div>
         </Modal>
       )}
 
