@@ -1723,7 +1723,7 @@ export default function App() {
             ):(
               <div style={{display:"flex",flexDirection:"column",gap:"0.6rem"}}>
                 <a
-                  href={"https://wa.me/393930008654?text="+encodeURIComponent("Salve, vorrei richiedere informazioni su "+selectedCar.brand+" "+selectedCar.model)}
+                  href={"https://wa.me/393930008654?text="+encodeURIComponent("Salve, vorrei richiedere informazioni sulla "+selectedCar.brand+" "+selectedCar.model+" del "+selectedCar.year)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="contact-call-btn"
