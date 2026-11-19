@@ -21,6 +21,14 @@ const FALLBACK_CARS = [
   { id:3, brand:"Volkswagen", model:"Tiguan R-Line", year:2021, price:120, km:45000, fuel:"Benzina", type:"noleggio", cambio:"automatico", status:"noleggiata", features:["4x4","Navigatore","Sensori parcheggio","Bluetooth"], featured:true, images:["https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&q=80"], description:"" },
 ];
 
+// Chiave di salvataggio della scelta sui cookie
+const CONSENT_KEY = "2erre-cookie-consent";
+
+function readConsent() {
+  try { return JSON.parse(localStorage.getItem(CONSENT_KEY))?.choice ?? null; }
+  catch { return null; }
+}
+
 async function uploadImages(files) {
   const urls = [];
   for (const file of files) {
@@ -830,6 +838,35 @@ body {
 .nav-mobile-actions { display: none; }
 .nav-items-desktop { display: flex; }
 
+/* ── COOKIE BANNER ── */
+.cookie-banner {
+  position: fixed; left: 1rem; right: 1rem; bottom: 1rem; z-index: 9000;
+  max-width: 44rem; margin: 0 auto;
+  background: var(--navy); color: #fff;
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 0.875rem; padding: 1.25rem 1.4rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+  animation: cookie-in 0.5s var(--ease-out);
+}
+@keyframes cookie-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.cookie-title { font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 700; color: var(--gold); margin-bottom: 0.4rem; }
+.cookie-text { font-size: 0.82rem; line-height: 1.6; color: rgba(255,255,255,0.7); margin-bottom: 1rem; }
+.cookie-actions { display: flex; gap: 0.75rem; }
+.cookie-btn {
+  flex: 1; padding: 0.75em 1.2em; border-radius: 0.4rem; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  background: transparent; color: var(--gold); border: 1.5px solid var(--gold);
+  transition: background var(--t-fast), transform var(--t-fast) var(--ease-spring);
+}
+.cookie-btn:hover { background: rgba(201,168,76,0.15); transform: translateY(-1px); }
+.cookie-btn:active { transform: scale(0.98); }
+.footer-cookie-btn { background: none; border: none; color: rgba(255,255,255,0.35); font-size: 0.72rem; text-decoration: underline; cursor: pointer; margin-top: 0.5rem; font-family: 'DM Sans', sans-serif; }
+.footer-cookie-btn:hover { color: var(--gold); }
+
 @media (max-width: 768px) {
   :root { --nav-h: 3.5rem; }
   .nav-items-desktop { display: none !important; }
@@ -871,6 +908,7 @@ body {
 
 @media (max-width:480px) {
   .intro-logo-wrap { gap: 14px; }
+  .cookie-actions { flex-direction: column; }
 }
 @media (max-height:500px) and (orientation:landscape) {
   .intro-logo-wrap { gap: 10px; flex-direction: row; flex-wrap: wrap; justify-content: center; }
@@ -1385,6 +1423,27 @@ function Modal({ children, onClose, wide }) {
 }
 
 // ─────────────────────────────────────────────────────────────
+//  COOKIE BANNER
+// ─────────────────────────────────────────────────────────────
+function CookieBanner({ onChoice }) {
+  return (
+    <div className="cookie-banner" role="dialog" aria-live="polite" aria-label="Preferenze cookie">
+      <p className="cookie-title">🍪 La tua privacy</p>
+      <p className="cookie-text">
+        Usiamo cookie tecnici necessari al funzionamento del sito. Con il tuo consenso
+        potremmo usare anche cookie di analisi e di terze parti per migliorare il servizio.
+        Puoi accettare o rifiutare: il sito funziona in entrambi i casi e puoi cambiare idea
+        in qualsiasi momento dal link "Gestisci cookie" in fondo alla pagina.
+      </p>
+      <div className="cookie-actions">
+        <button className="cookie-btn" onClick={() => onChoice("rejected")}>Rifiuta</button>
+        <button className="cookie-btn" onClick={() => onChoice("accepted")}>Accetta</button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 //  MAIN APP
 // ─────────────────────────────────────────────────────────────
 export default function App() {
@@ -1410,6 +1469,23 @@ export default function App() {
   const [uploading, setUploading] = useState(false);
   const [editingCar, setEditingCar] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
+
+  // ── COOKIE CONSENT ──
+  const [consent, setConsent] = useState(readConsent);   // null | "accepted" | "rejected"
+  const [consentReopen, setConsentReopen] = useState(false);
+  const showCookieBanner = introDone && (consent === null || consentReopen);
+
+  function saveConsent(choice) {
+    try { localStorage.setItem(CONSENT_KEY, JSON.stringify({ choice, date: new Date().toISOString() })); } catch {}
+    setConsent(choice);
+    setConsentReopen(false);
+  }
+
+  // Qui in futuro carichi analytics/pixel, SOLO se consent === "accepted"
+  useEffect(() => {
+    if (consent !== "accepted") return;
+    // es. caricamento Google Analytics
+  }, [consent]);
 
   const { hidden: navHidden, scrolled: navScrolled } = useNavHide();
   // FIX: pass page so reveal re-triggers on navigation
@@ -1684,13 +1760,16 @@ export default function App() {
       <footer className="footer">
         <p className="footer-logo"><span style={{color:"#c9a84c",fontFamily:"'Playfair Display',serif",fontWeight:900}}>2erre</span><span style={{fontWeight:300,letterSpacing:"0.3em",fontSize:"0.75em",marginLeft:"0.4em",color:"rgba(255,255,255,0.35)"}}>professional car S.R.L.</span></p>
         <p className="footer-sub">Via Collatina, 381 — Roma</p>
+        <button className="footer-cookie-btn" onClick={()=>setConsentReopen(true)}>Gestisci cookie</button>
         {dbConnected&&<p style={{fontSize:"0.72rem",color:"#2ecc71",marginTop:"0.3rem"}}>● Database connesso</p>}
       </footer>
 
-      <a className="whatsapp-fab" href="https://wa.me/393930008654?text=Ciao%2C%20vi%20contatto%20dal%20sito%20per%20informazioni%20sulle%20auto" target="_blank" rel="noopener noreferrer" aria-label="Contattaci su WhatsApp">
-        <span className="whatsapp-fab-icon"><IconWhatsApp/></span>
-        Scrivici su WhatsApp
-      </a>
+      {!showCookieBanner&&(
+        <a className="whatsapp-fab" href="https://wa.me/393930008654?text=Ciao%2C%20vi%20contatto%20dal%20sito%20per%20informazioni%20sulle%20auto" target="_blank" rel="noopener noreferrer" aria-label="Contattaci su WhatsApp">
+          <span className="whatsapp-fab-icon"><IconWhatsApp/></span>
+          Scrivici su WhatsApp
+        </a>
+      )}
 
       {/* ── MODAL AUTO ── */}
       {selectedCar&&(
@@ -1800,6 +1879,9 @@ export default function App() {
           )}
         </Modal>
       )}
+
+      {/* ── COOKIE BANNER ── */}
+      {showCookieBanner && <CookieBanner onChoice={saveConsent} />}
     </div>
   );
 }
