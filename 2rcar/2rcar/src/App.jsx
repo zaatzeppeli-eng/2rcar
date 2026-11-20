@@ -867,6 +867,17 @@ body {
 .footer-cookie-btn { background: none; border: none; color: rgba(255,255,255,0.35); font-size: 0.72rem; text-decoration: underline; cursor: pointer; margin-top: 0.5rem; font-family: 'DM Sans', sans-serif; }
 .footer-cookie-btn:hover { color: var(--gold); }
 
+/* ── PRIVACY POLICY ── */
+.policy-body { padding: 1.75rem; }
+.policy-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: var(--navy); margin-bottom: 0.4rem; padding-right: 2rem; }
+.policy-updated { font-size: 0.75rem; color: var(--muted); margin-bottom: 1.25rem; }
+.policy-h { font-family: 'Playfair Display', serif; font-size: 1.02rem; font-weight: 700; color: var(--navy); margin: 1.25rem 0 0.4rem; }
+.policy-p { font-size: 0.88rem; line-height: 1.7; color: #555; }
+.policy-p a { color: var(--gold); }
+.policy-p code { background: #f0ede6; padding: 0.1em 0.4em; border-radius: 0.25rem; font-size: 0.82em; }
+.footer-links { display: flex; gap: 1.25rem; justify-content: center; flex-wrap: wrap; }
+.cookie-link { background: none; border: none; color: var(--gold); text-decoration: underline; cursor: pointer; font: inherit; padding: 0; }
+
 @media (max-width: 768px) {
   :root { --nav-h: 3.5rem; }
   .nav-items-desktop { display: none !important; }
@@ -897,6 +908,7 @@ body {
   .admin-list-item { flex-wrap: wrap; gap: 0.5rem; }
   .admin-list-actions { margin-left: auto; }
   .admin-action-btn { width: 2.5rem; height: 2.5rem; font-size: 1rem; }
+  .policy-body { padding: 1.25rem; }
 }
 
 @media (max-width: 640px) {
@@ -948,7 +960,6 @@ function GlobalStyles() {
 // ─────────────────────────────────────────────────────────────
 function IntroScreen({ onDone }) {
   const ref = useRef(null);
-  // FIX: stabilise onDone ref so the effect deps don't need to re-run
   const onDoneRef = useRef(onDone);
   useEffect(() => { onDoneRef.current = onDone; }, [onDone]);
 
@@ -970,7 +981,7 @@ function IntroScreen({ onDone }) {
       document.body.style.overflow = "";
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // run once on mount only
+  }, []);
 
   return (
     <div id="intro-screen" ref={ref} aria-hidden="true">
@@ -1027,7 +1038,6 @@ function useNavHide() {
   return { hidden, scrolled };
 }
 
-// FIX: added page as dependency so reveal re-runs when page changes
 function useReveal(page) {
   useEffect(() => {
     const noAnim = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1044,7 +1054,6 @@ function useReveal(page) {
       }),
       { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
     );
-    // Small timeout so new page DOM is ready
     const t = setTimeout(() => {
       document.querySelectorAll(".reveal:not(.visible)").forEach(el => observer.observe(el));
     }, 50);
@@ -1398,7 +1407,6 @@ function IconWhatsApp() {
   return <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>;
 }
 
-// FIX: removed `wide` from DOM props to avoid React unknown-prop warning
 function Modal({ children, onClose, wide }) {
   const [closing, setClosing] = useState(false);
   function handleClose() {
@@ -1413,7 +1421,6 @@ function Modal({ children, onClose, wide }) {
   },[]);
   return (
     <div className="overlay" onClick={handleClose}>
-      {/* FIX: use className toggle instead of passing `wide` as HTML attribute */}
       <div className={`${wide?"edit-modal":"modal"}${closing?" closing":""}`} onClick={e=>e.stopPropagation()}>
         <button className="modal-close" onClick={handleClose}>✕</button>
         {children}
@@ -1423,9 +1430,68 @@ function Modal({ children, onClose, wide }) {
 }
 
 // ─────────────────────────────────────────────────────────────
+//  INFORMATIVA PRIVACY E COOKIE POLICY
+// ─────────────────────────────────────────────────────────────
+function PrivacyPolicy() {
+  return (
+    <div className="policy-body">
+      <h2 className="policy-title">Informativa Privacy e Cookie Policy</h2>
+      <p className="policy-updated">Ultimo aggiornamento: novembre 2026</p>
+
+      <h3 className="policy-h">1. Titolare del trattamento</h3>
+      <p className="policy-p">
+        Il titolare del trattamento dei dati per questo sito web è <strong>2erre professional car S.R.L.</strong>,
+        P.IVA 12397801007, con sede in Via Collatina 381, Roma (RM), contattabile all'indirizzo email{" "}
+        <a href="mailto:2erreprofessionalcar@libero.it">2erreprofessionalcar@libero.it</a>.
+      </p>
+
+      <h3 className="policy-h">2. Tipologia di dati trattati e archiviazione locale</h3>
+      <p className="policy-p">
+        Questo sito non richiede registrazione ai visitatori e non raccoglie dati personali per finalità
+        commerciali o di profilazione. Le preferenze dell'utente (ad esempio la scelta sui cookie) e, per il
+        solo personale autorizzato, la sessione di accesso all'area riservata vengono salvate esclusivamente in
+        locale sul browser del dispositivo (<code>localStorage</code> / <code>sessionStorage</code> / cookie
+        tecnici) al solo scopo di consentire il corretto funzionamento del servizio. L'archivio degli annunci
+        e delle relative foto è ospitato su infrastruttura di un fornitore di servizi cloud, che agisce come
+        responsabile del trattamento e non utilizza tali dati per proprie finalità.
+      </p>
+
+      <h3 className="policy-h">3. Uso dei Cookie</h3>
+      <p className="policy-p">
+        Questo sito utilizza esclusivamente cookie e strumenti di archiviazione tecnica strettamente necessari
+        all'erogazione del servizio. Non vengono utilizzati cookie analitici di terze parti né cookie di
+        profilazione o marketing. Ai sensi della normativa vigente (GDPR e Linee Guida del Garante Privacy), per
+        tali strumenti tecnici non è richiesto il consenso preventivo dell'utente. Puoi modificare in qualsiasi
+        momento la tua scelta dal link "Gestisci cookie" in fondo alla pagina.
+      </p>
+
+      <h3 className="policy-h">4. Servizi esterni</h3>
+      <p className="policy-p">
+        Per visualizzare correttamente il sito vengono caricati font (Google Fonts) e immagini da server di
+        terze parti; in tale occasione il tuo indirizzo IP può essere trattato dal fornitore del servizio.
+        Inoltre, all'interno del sito sono presenti collegamenti esterni per contattarci tramite WhatsApp.
+        Questi collegamenti non trasmettono alcun dato né installano cookie di terze parti durante la
+        navigazione. Solo qualora l'utente decida volontariamente di cliccare sul pulsante, verrà reindirizzato
+        sulla piattaforma WhatsApp (fornita da Meta Platforms Ireland Ltd.), che opererà in qualità di autonomo
+        titolare del trattamento secondo la propria informativa sulla privacy.
+      </p>
+
+      <h3 className="policy-h">5. Diritti dell'utente</h3>
+      <p className="policy-p">
+        L'utente può cancellare in qualsiasi momento i dati salvati localmente svuotando la cache o i dati di
+        navigazione del proprio browser. Ai sensi degli artt. 15–22 del GDPR hai inoltre diritto di accesso,
+        rettifica, cancellazione, limitazione e opposizione, e di proporre reclamo al Garante per la protezione
+        dei dati personali. Per qualsiasi informazione o richiesta relativa alla privacy puoi scrivere a{" "}
+        <a href="mailto:2erreprofessionalcar@libero.it">2erreprofessionalcar@libero.it</a>.
+      </p>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 //  COOKIE BANNER
 // ─────────────────────────────────────────────────────────────
-function CookieBanner({ onChoice }) {
+function CookieBanner({ onChoice, onPrivacy }) {
   return (
     <div className="cookie-banner" role="dialog" aria-live="polite" aria-label="Preferenze cookie">
       <p className="cookie-title">🍪 La tua privacy</p>
@@ -1433,7 +1499,8 @@ function CookieBanner({ onChoice }) {
         Usiamo cookie tecnici necessari al funzionamento del sito. Con il tuo consenso
         potremmo usare anche cookie di analisi e di terze parti per migliorare il servizio.
         Puoi accettare o rifiutare: il sito funziona in entrambi i casi e puoi cambiare idea
-        in qualsiasi momento dal link "Gestisci cookie" in fondo alla pagina.
+        in qualsiasi momento dal link "Gestisci cookie" in fondo alla pagina.{" "}
+        <button className="cookie-link" onClick={onPrivacy}>Leggi l'informativa</button>
       </p>
       <div className="cookie-actions">
         <button className="cookie-btn" onClick={() => onChoice("rejected")}>Rifiuta</button>
@@ -1473,7 +1540,8 @@ export default function App() {
   // ── COOKIE CONSENT ──
   const [consent, setConsent] = useState(readConsent);   // null | "accepted" | "rejected"
   const [consentReopen, setConsentReopen] = useState(false);
-  const showCookieBanner = introDone && (consent === null || consentReopen);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+  const showCookieBanner = introDone && !privacyOpen && (consent === null || consentReopen);
 
   function saveConsent(choice) {
     try { localStorage.setItem(CONSENT_KEY, JSON.stringify({ choice, date: new Date().toISOString() })); } catch {}
@@ -1488,7 +1556,6 @@ export default function App() {
   }, [consent]);
 
   const { hidden: navHidden, scrolled: navScrolled } = useNavHide();
-  // FIX: pass page so reveal re-triggers on navigation
   useReveal(page);
 
   useEffect(()=>{
@@ -1508,7 +1575,6 @@ export default function App() {
     setLoading(false);
   }
 
-  // FIX: close admin modal on successful login
   async function handleAdminLogin(e) {
     e.preventDefault(); setAuthLoading(true); setAuthError("");
     const {error}=await supabase.auth.signInWithPassword({email:loginEmail,password:loginPassword});
@@ -1517,7 +1583,6 @@ export default function App() {
     } else {
       setLoginEmail("");
       setLoginPassword("");
-      // Keep modal open so admin can use the panel — do NOT close here
     }
     setAuthLoading(false);
   }
@@ -1760,7 +1825,11 @@ export default function App() {
       <footer className="footer">
         <p className="footer-logo"><span style={{color:"#c9a84c",fontFamily:"'Playfair Display',serif",fontWeight:900}}>2erre</span><span style={{fontWeight:300,letterSpacing:"0.3em",fontSize:"0.75em",marginLeft:"0.4em",color:"rgba(255,255,255,0.35)"}}>professional car S.R.L.</span></p>
         <p className="footer-sub">Via Collatina, 381 — Roma</p>
-        <button className="footer-cookie-btn" onClick={()=>setConsentReopen(true)}>Gestisci cookie</button>
+        <p className="footer-sub" style={{marginTop:"0.25rem"}}>P.IVA 12397801007</p>
+        <div className="footer-links">
+          <button className="footer-cookie-btn" onClick={()=>setPrivacyOpen(true)}>Informativa Privacy e Cookie</button>
+          <button className="footer-cookie-btn" onClick={()=>setConsentReopen(true)}>Gestisci cookie</button>
+        </div>
         {dbConnected&&<p style={{fontSize:"0.72rem",color:"#2ecc71",marginTop:"0.3rem"}}>● Database connesso</p>}
       </footer>
 
@@ -1794,7 +1863,6 @@ export default function App() {
               <p className="modal-price">{selectedCar.type==="noleggio"?`€ ${selectedCar.price}/giorno`:`€ ${selectedCar.price?.toLocaleString()}`}</p>
             )}
             {selectedCar.description&&<p className="modal-description">{selectedCar.description}</p>}
-            {/* FIX: restored broken JSX block — the <a> tag opening was missing */}
             {selectedCar.status==="venduta"?(
               <div style={{background:"#fdecea",color:"#e74c3c",borderRadius:"0.5rem",padding:"0.9em",textAlign:"center",fontWeight:700}}>Auto non più disponibile</div>
             ):selectedCar.status==="noleggiata"?(
@@ -1880,8 +1948,15 @@ export default function App() {
         </Modal>
       )}
 
+      {/* ── INFORMATIVA PRIVACY ── */}
+      {privacyOpen && (
+        <Modal onClose={()=>setPrivacyOpen(false)}>
+          <PrivacyPolicy />
+        </Modal>
+      )}
+
       {/* ── COOKIE BANNER ── */}
-      {showCookieBanner && <CookieBanner onChoice={saveConsent} />}
+      {showCookieBanner && <CookieBanner onChoice={saveConsent} onPrivacy={()=>setPrivacyOpen(true)} />}
     </div>
   );
 }
